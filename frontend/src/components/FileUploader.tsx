@@ -41,7 +41,7 @@ export default function FileUploader({ onAnalyze, isLoading }: FileUploaderProps
   };
 
   return (
-    <div className="space-y-4">
+    <div id="file-upload" className="space-y-4">
       <Card>
         <CardContent className="pt-6">
           <div
