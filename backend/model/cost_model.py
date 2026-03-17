@@ -1,67 +1,100 @@
 """
 ML-based cost prediction model for Terraform infrastructure.
-Uses a rule-based estimator combined with trained ML models.
+Uses trained machine learning models for accurate cost estimation.
 """
 
 import numpy as np
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List
+import sys
+import os
 
-# Base monthly costs (USD) for AWS resources - approximate
-BASE_COSTS = {
-    "EC2": {
-        "base_per_instance": 30.0,  # base cost per instance
-        "tier_multiplier": 50.0,    # multiplied by instance tier
-        "storage_per_gb": 0.10,     # EBS cost per GB
-    },
-    "RDS": {
-        "base": 25.0,
-        "tier_multiplier": 80.0,
-        "storage_per_gb": 0.115,
-        "multi_az_multiplier": 2.0,
-    },
-    "S3": {
-        "base_per_bucket": 3.0,
-        "versioning_extra": 2.0,
-    },
-    "LoadBalancer": {
-        "alb": 22.0,
-        "nlb": 22.0,
-        "clb": 18.0,
-    },
-    "EBS": {
-        "gp2_per_gb": 0.10,
-        "gp3_per_gb": 0.08,
-        "io1_per_gb": 0.125,
-        "st1_per_gb": 0.045,
-        "sc1_per_gb": 0.025,
-        "iops_cost": 0.065,
-    },
-    "Networking": {
-        "nat_gateway": 32.0,
-        "eip": 3.6,
-        "vpc": 0.0,
-        "subnet": 0.0,
-        "igw": 0.0,
-        "route_table": 0.0,
-        "security_group": 0.0,
-    },
-    "Lambda": {"base": 5.0},
-    "DynamoDB": {"base": 10.0},
-    "ElastiCache": {"base": 25.0},
-    "CloudFront": {"base": 15.0},
-    "SQS": {"base": 2.0},
-    "SNS": {"base": 1.0},
-    "ECS": {"base": 20.0},
-    "EKS": {"base": 73.0},
-    "Other": {"base": 5.0},
-}
+# Add the ml directory to the path to import our ML modules
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'ml'))
+
+try:
+    from ml_predictor import get_predictor
+    ML_AVAILABLE = True
+except ImportError:
+    ML_AVAILABLE = False
+    print("Warning: ML predictor not available, using rule-based fallback")
 
 
 def predict_cost(features: Dict[str, Any], resource_details: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
-    Predict infrastructure cost based on extracted features.
-    Uses a hybrid approach: rule-based estimation + ML confidence scoring.
+    Predict infrastructure cost using trained ML models.
+    
+    Args:
+        features: Extracted features from terraform configuration
+        resource_details: Detailed resource information
+        
+    Returns:
+        Prediction results with cost, confidence, and breakdown
     """
+    if ML_AVAILABLE:
+        # Use the trained ML predictor
+        predictor = get_predictor()
+        return predictor.predict_cost(features, resource_details)
+    else:
+        # Fallback to rule-based estimation
+        return _rule_based_prediction(features, resource_details)
+
+
+def _rule_based_prediction(features: Dict[str, Any], resource_details: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    Rule-based cost estimation as fallback.
+    This is the original implementation for when ML is not available.
+    """
+    
+    # Base monthly costs (USD) for AWS resources - approximate
+    BASE_COSTS = {
+        "EC2": {
+            "base_per_instance": 30.0,  # base cost per instance
+            "tier_multiplier": 50.0,    # multiplied by instance tier
+            "storage_per_gb": 0.10,     # EBS cost per GB
+        },
+        "RDS": {
+            "base": 25.0,
+            "tier_multiplier": 80.0,
+            "storage_per_gb": 0.115,
+            "multi_az_multiplier": 2.0,
+        },
+        "S3": {
+            "base_per_bucket": 3.0,
+            "versioning_extra": 2.0,
+        },
+        "LoadBalancer": {
+            "alb": 22.0,
+            "nlb": 22.0,
+            "clb": 18.0,
+        },
+        "EBS": {
+            "gp2_per_gb": 0.10,
+            "gp3_per_gb": 0.08,
+            "io1_per_gb": 0.125,
+            "st1_per_gb": 0.045,
+            "sc1_per_gb": 0.025,
+            "iops_cost": 0.065,
+        },
+        "Networking": {
+            "nat_gateway": 32.0,
+            "eip": 3.6,
+            "vpc": 0.0,
+            "subnet": 0.0,
+            "igw": 0.0,
+            "route_table": 0.0,
+            "security_group": 0.0,
+        },
+        "Lambda": {"base": 5.0},
+        "DynamoDB": {"base": 10.0},
+        "ElastiCache": {"base": 25.0},
+        "CloudFront": {"base": 15.0},
+        "SQS": {"base": 2.0},
+        "SNS": {"base": 1.0},
+        "ECS": {"base": 20.0},
+        "EKS": {"base": 73.0},
+        "Other": {"base": 5.0},
+    }
+
     breakdown = {}
     total_cost = 0.0
 
@@ -184,6 +217,19 @@ def predict_cost(features: Dict[str, Any], resource_details: List[Dict[str, Any]
         "estimated_monthly_cost": round(total_cost, 2),
         "confidence_score": round(confidence * 100),
         "breakdown": breakdown,
-        "model_type": "Gradient Boosting (Hybrid)",
+        "model_type": "Rule-based (ML Fallback)",
         "currency": "USD",
     }
+
+
+def get_model_info() -> Dict[str, Any]:
+    """Get information about the prediction model."""
+    if ML_AVAILABLE:
+        predictor = get_predictor()
+        return predictor.get_model_info()
+    else:
+        return {
+            "status": "rule_based",
+            "model_type": "Rule-based Estimation",
+            "message": "ML model not available, using rule-based fallback"
+        }

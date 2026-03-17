@@ -1,0 +1,237 @@
+{
+  "ec2": {
+    "t3.nano": {
+      "hourly": 0.0052,
+      "memory": 0.5,
+      "vcpu": 2,
+      "storage": "ebs-only"
+    },
+    "t3.micro": {
+      "hourly": 0.0104,
+      "memory": 1.0,
+      "vcpu": 2,
+      "storage": "ebs-only"
+    },
+    "t3.small": {
+      "hourly": 0.0208,
+      "memory": 2.0,
+      "vcpu": 2,
+      "storage": "ebs-only"
+    },
+    "t3.medium": {
+      "hourly": 0.0416,
+      "memory": 4.0,
+      "vcpu": 2,
+      "storage": "ebs-only"
+    },
+    "t3.large": {
+      "hourly": 0.0832,
+      "memory": 8.0,
+      "vcpu": 2,
+      "storage": "ebs-only"
+    },
+    "t3.xlarge": {
+      "hourly": 0.1664,
+      "memory": 16.0,
+      "vcpu": 4,
+      "storage": "ebs-only"
+    },
+    "t3.2xlarge": {
+      "hourly": 0.3328,
+      "memory": 32.0,
+      "vcpu": 8,
+      "storage": "ebs-only"
+    },
+    "m5.large": {
+      "hourly": 0.096,
+      "memory": 8.0,
+      "vcpu": 2,
+      "storage": "ebs-only"
+    },
+    "m5.xlarge": {
+      "hourly": 0.192,
+      "memory": 16.0,
+      "vcpu": 4,
+      "storage": "ebs-only"
+    },
+    "m5.2xlarge": {
+      "hourly": 0.384,
+      "memory": 32.0,
+      "vcpu": 8,
+      "storage": "ebs-only"
+    },
+    "m5.4xlarge": {
+      "hourly": 0.768,
+      "memory": 64.0,
+      "vcpu": 16,
+      "storage": "ebs-only"
+    },
+    "c5.large": {
+      "hourly": 0.085,
+      "memory": 4.0,
+      "vcpu": 2,
+      "storage": "ebs-only"
+    },
+    "c5.xlarge": {
+      "hourly": 0.17,
+      "memory": 8.0,
+      "vcpu": 4,
+      "storage": "ebs-only"
+    },
+    "c5.2xlarge": {
+      "hourly": 0.34,
+      "memory": 16.0,
+      "vcpu": 8,
+      "storage": "ebs-only"
+    },
+    "r5.large": {
+      "hourly": 0.126,
+      "memory": 16.0,
+      "vcpu": 2,
+      "storage": "ebs-only"
+    },
+    "r5.xlarge": {
+      "hourly": 0.252,
+      "memory": 32.0,
+      "vcpu": 4,
+      "storage": "ebs-only"
+    },
+    "r5.2xlarge": {
+      "hourly": 0.504,
+      "memory": 64.0,
+      "vcpu": 8,
+      "storage": "ebs-only"
+    }
+  },
+  "rds": {
+    "db.t3.micro": {
+      "hourly": 0.017,
+      "memory": 1.0,
+      "vcpu": 2,
+      "storage_multiplier": 1.0
+    },
+    "db.t3.small": {
+      "hourly": 0.034,
+      "memory": 2.0,
+      "vcpu": 2,
+      "storage_multiplier": 1.0
+    },
+    "db.t3.medium": {
+      "hourly": 0.068,
+      "memory": 4.0,
+      "vcpu": 2,
+      "storage_multiplier": 1.0
+    },
+    "db.t3.large": {
+      "hourly": 0.136,
+      "memory": 8.0,
+      "vcpu": 2,
+      "storage_multiplier": 1.0
+    },
+    "db.m5.large": {
+      "hourly": 0.145,
+      "memory": 8.0,
+      "vcpu": 2,
+      "storage_multiplier": 1.0
+    },
+    "db.m5.xlarge": {
+      "hourly": 0.29,
+      "memory": 16.0,
+      "vcpu": 4,
+      "storage_multiplier": 1.0
+    },
+    "db.m5.2xlarge": {
+      "hourly": 0.58,
+      "memory": 32.0,
+      "vcpu": 8,
+      "storage_multiplier": 1.0
+    },
+    "db.r5.large": {
+      "hourly": 0.189,
+      "memory": 16.0,
+      "vcpu": 2,
+      "storage_multiplier": 1.0
+    },
+    "db.r5.xlarge": {
+      "hourly": 0.378,
+      "memory": 32.0,
+      "vcpu": 4,
+      "storage_multiplier": 1.0
+    },
+    "db.r5.2xlarge": {
+      "hourly": 0.756,
+      "memory": 64.0,
+      "vcpu": 8,
+      "storage_multiplier": 1.0
+    }
+  },
+  "storage": {
+    "ebs": {
+      "gp2": {
+        "per_gb_month": 0.1,
+        "iops_included": 3,
+        "max_throughput": 250
+      },
+      "gp3": {
+        "per_gb_month": 0.08,
+        "iops_included": 3000,
+        "max_throughput": 1000
+      },
+      "io1": {
+        "per_gb_month": 0.125,
+        "per_iops_month": 0.065
+      },
+      "st1": {
+        "per_gb_month": 0.045,
+        "max_throughput": 500
+      },
+      "sc1": {
+        "per_gb_month": 0.025,
+        "max_throughput": 250
+      }
+    },
+    "s3": {
+      "standard": {
+        "per_gb_month": 0.023,
+        "per_1000_requests": 0.0004
+      },
+      "intelligent_tiering": {
+        "per_gb_month": 0.023,
+        "per_1000_requests": 0.0004
+      },
+      "infrequent_access": {
+        "per_gb_month": 0.0125,
+        "per_1000_requests": 0.001
+      },
+      "glacier": {
+        "per_gb_month": 0.004,
+        "per_1000_requests": 0.0025
+      }
+    }
+  },
+  "networking": {
+    "nat_gateway": {
+      "hourly": 0.045,
+      "per_gb_data": 0.045
+    },
+    "application_lb": {
+      "hourly": 0.0225,
+      "per_lcu_hour": 0.008
+    },
+    "network_lb": {
+      "hourly": 0.0225,
+      "per_lcu_hour": 0.006
+    },
+    "elastic_ip": {
+      "hourly": 0.005,
+      "not_attached": 0.003
+    },
+    "data_transfer": {
+      "per_gb_out": 0.09,
+      "per_gb_in": 0.0,
+      "per_gb_inter_region": 0.02,
+      "per_gb_internet": 0.09
+    }
+  },
+  "collected_at": "2026-03-17T10:37:00.218650"
+}

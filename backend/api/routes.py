@@ -6,9 +6,18 @@ from fastapi import APIRouter, UploadFile, File, HTTPException
 from typing import List
 from parser.terraform_parser import parse_terraform_files, extract_resources
 from features.feature_extractor import extract_features_from_resources
-from model.cost_model import predict_cost
+from model.cost_model import predict_cost, get_model_info
 
 router = APIRouter()
+
+
+@router.get("/model/info")
+async def get_model_information():
+    """
+    Get information about the ML model being used for predictions.
+    Returns model type, performance metrics, and training status.
+    """
+    return get_model_info()
 
 
 @router.post("/predict")
