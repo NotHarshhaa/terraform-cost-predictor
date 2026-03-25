@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import CostChart from "@/components/CostChart";
+import CostChart from "@/components/cost-chart";
 import type { PredictionResult } from "@/services/api";
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {

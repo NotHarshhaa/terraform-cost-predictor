@@ -13,8 +13,8 @@ import {
   ArrowRight,
   BookOpen,
   FileText} from "lucide-react";
-import FileUploader from "@/components/FileUploader";
-import CostDashboard from "@/components/CostDashboard";
+import FileUploader from "@/components/file-uploader";
+import CostDashboard from "@/components/cost-dashboard";
 import { predictCost, type PredictionResult } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
@@ -105,8 +105,7 @@ export default function Home() {
                   <p className="font-medium text-destructive">Analysis Failed</p>
                   <p className="text-sm text-muted-foreground mt-1">{error}</p>
                   <p className="text-sm text-muted-foreground mt-2">
-                    Make sure the backend API is running at{" "}
-                    <Badge variant="outline" className="text-xs">http://localhost:8000</Badge>
+                    Please check your Terraform files and try again.
                   </p>
                 </div>
               </div>
