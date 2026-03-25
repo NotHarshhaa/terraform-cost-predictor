@@ -121,6 +121,55 @@ export default function Home() {
               <div className="text-center mb-12">
                 <h2 className="text-3xl font-bold mb-4">How It Works</h2>
                 <p className="text-muted-foreground max-w-2xl mx-auto">
+                  Our ML-powered platform analyzes your Terraform configurations using trained models to provide accurate cost predictions before deployment.
+                </p>
+              </div>
+            </section>
+
+            <section className="mt-20 mb-20">
+              <div className="max-w-4xl mx-auto">
+                <Card className="bg-gradient-to-br from-primary/5 to-secondary/5 border-primary/20">
+                  <CardContent className="p-8">
+                    <div className="flex flex-col md:flex-row items-center gap-6">
+                      <div className="flex-shrink-0">
+                        <img
+                          src="https://github.com/NotHarshhaa.png"
+                          alt="H A R S H H A A"
+                          className="w-24 h-24 rounded-full border-4 border-primary/20 shadow-lg"
+                        />
+                      </div>
+                      <div className="flex-1 text-center md:text-left">
+                        <h3 className="text-2xl font-bold mb-2 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                          H A R S H H A A
+                        </h3>
+                        <p className="text-muted-foreground leading-relaxed">
+                          A passionate DevOps Engineer, MLOps specialist, and Platform Engineering expert on a mission to automate everything, scale cloud infrastructures efficiently, and build internal development platforms that empower engineering teams.
+                        </p>
+                        <div className="flex flex-wrap gap-2 mt-4 justify-center md:justify-start">
+                          <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20">
+                            DevOps
+                          </Badge>
+                          <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20">
+                            MLOps
+                          </Badge>
+                          <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20">
+                            Platform Engineering
+                          </Badge>
+                          <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20">
+                            Cloud Architecture
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </section>
+
+            <section className="mt-20">
+              <div className="text-center mb-12">
+                <h2 className="text-3xl font-bold mb-4">How It Works</h2>
+                <p className="text-muted-foreground max-w-2xl mx-auto">
                   Get accurate cost predictions in three simple steps
                 </p>
               </div>
