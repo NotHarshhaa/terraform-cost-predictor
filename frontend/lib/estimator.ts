@@ -1,4 +1,4 @@
-import { TerraformResource } from './terraform-parser';
+import { TerraformResource } from './parser';
 
 // AWS Pricing Data (simplified estimates in USD/month)
 const AWS_PRICING = {
