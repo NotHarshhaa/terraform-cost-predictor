@@ -51,11 +51,9 @@ export async function POST(request: NextRequest) {
 
     // Estimate costs
     const prediction = estimateCost(parsed.resources);
-    const resourceDetails = extractResourceDetails(parsed.resources);
 
     return NextResponse.json({
       ...prediction,
-      resources: resourceDetails,
       parse_errors: parsed.errors,
     });
 

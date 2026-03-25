@@ -1,5 +1,3 @@
-import { parseToObject } from 'hcl2-parser';
-
 export interface TerraformResource {
   type: string;
   name: string;
@@ -17,27 +15,60 @@ export async function parseTerraformFiles(files: Record<string, string>): Promis
 
   for (const [filename, content] of Object.entries(files)) {
     try {
-      const parsed = parseToObject(content);
+      console.log(`Parsing file: ${filename}`);
       
-      // Extract resources from parsed HCL
-      if (parsed.resource) {
-        for (const [resourceType, resourceInstances] of Object.entries(parsed.resource)) {
-          if (typeof resourceInstances === 'object' && resourceInstances !== null) {
-            for (const [resourceName, attributes] of Object.entries(resourceInstances)) {
-              resources.push({
-                type: resourceType as string,
-                name: resourceName as string,
-                attributes: attributes as Record<string, any>,
-              });
-            }
-          }
+      // Simple regex-based parser for Terraform resources
+      const resourceRegex = /resource\s+"([^"]+)"\s+"([^"]+)"\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/g;
+      let match;
+      
+      while ((match = resourceRegex.exec(content)) !== null) {
+        const resourceType = match[1];
+        const resourceName = match[2];
+        const resourceBody = match[3];
+        
+        console.log(`Found resource: ${resourceType}.${resourceName}`);
+        
+        // Extract attributes from resource body
+        const attributes: Record<string, any> = {};
+        
+        // Extract simple key-value pairs
+        const attrRegex = /(\w+)\s*=\s*"([^"]*)"/g;
+        let attrMatch;
+        while ((attrMatch = attrRegex.exec(resourceBody)) !== null) {
+          attributes[attrMatch[1]] = attrMatch[2];
         }
+        
+        // Extract numeric values
+        const numRegex = /(\w+)\s*=\s*(\d+)/g;
+        let numMatch;
+        while ((numMatch = numRegex.exec(resourceBody)) !== null) {
+          attributes[numMatch[1]] = parseInt(numMatch[2]);
+        }
+        
+        // Extract boolean values
+        const boolRegex = /(\w+)\s*=\s*(true|false)/g;
+        let boolMatch;
+        while ((boolMatch = boolRegex.exec(resourceBody)) !== null) {
+          attributes[boolMatch[1]] = boolMatch[2] === 'true';
+        }
+        
+        resources.push({
+          type: resourceType,
+          name: resourceName,
+          attributes,
+        });
+      }
+      
+      if (resources.length === 0) {
+        console.log('No resources found in file');
       }
     } catch (error) {
+      console.error(`Error parsing ${filename}:`, error);
       errors.push(`Error parsing ${filename}: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
+  console.log(`Total resources found: ${resources.length}`);
   return { resources, errors };
 }
 

@@ -83,7 +83,7 @@ export function estimateCost(resources: TerraformResource[]): CostPrediction {
 
   for (const resource of resources) {
     let cost = 0;
-    let confidence = 85;
+    let confidence = 0.85; // Changed to decimal (0-1)
     let category = 'Other';
 
     // EC2 Instances
@@ -91,7 +91,7 @@ export function estimateCost(resources: TerraformResource[]): CostPrediction {
       category = 'EC2';
       const instanceType = resource.attributes.instance_type || 't2.micro';
       cost = AWS_PRICING.ec2[instanceType as keyof typeof AWS_PRICING.ec2] || 50;
-      confidence = 90;
+      confidence = 0.90;
     }
 
     // RDS Instances
@@ -108,7 +108,7 @@ export function estimateCost(resources: TerraformResource[]): CostPrediction {
       if (resource.attributes.multi_az) {
         cost *= 2;
       }
-      confidence = 88;
+      confidence = 0.88;
     }
 
     // S3 Buckets
@@ -116,7 +116,7 @@ export function estimateCost(resources: TerraformResource[]): CostPrediction {
       category = 'S3';
       // Estimate 100GB storage per bucket
       cost = 100 * AWS_PRICING.storage.s3_standard;
-      confidence = 70;
+      confidence = 0.70;
     }
 
     // EBS Volumes
@@ -126,35 +126,42 @@ export function estimateCost(resources: TerraformResource[]): CostPrediction {
       const volumeType = resource.attributes.type || 'gp3';
       const priceKey = `ebs_${volumeType}` as keyof typeof AWS_PRICING.storage;
       cost = size * (AWS_PRICING.storage[priceKey] || AWS_PRICING.storage.ebs_gp3);
-      confidence = 92;
+      confidence = 0.92;
     }
 
     // Load Balancers
     else if (resource.type === 'aws_lb' || resource.type === 'aws_alb' || resource.type === 'aws_elb') {
       category = 'LoadBalancer';
       cost = AWS_PRICING.services.load_balancer;
-      confidence = 95;
+      confidence = 0.95;
     }
 
     // NAT Gateway
     else if (resource.type === 'aws_nat_gateway') {
       category = 'Networking';
       cost = AWS_PRICING.services.nat_gateway;
-      confidence = 95;
+      confidence = 0.95;
     }
 
     // Elastic IP
     else if (resource.type === 'aws_eip') {
       category = 'Networking';
       cost = AWS_PRICING.services.elastic_ip;
-      confidence = 95;
+      confidence = 0.95;
     }
 
     // VPC
     else if (resource.type === 'aws_vpc') {
       category = 'Networking';
       cost = AWS_PRICING.services.vpc;
-      confidence = 100;
+      confidence = 1.00;
+    }
+
+    // Subnets, Internet Gateways (free resources)
+    else if (resource.type === 'aws_subnet' || resource.type === 'aws_internet_gateway') {
+      category = 'Networking';
+      cost = 0;
+      confidence = 1.00;
     }
 
     // Lambda Functions
@@ -165,7 +172,7 @@ export function estimateCost(resources: TerraformResource[]): CostPrediction {
       const estimatedInvocations = 1000000; // 1M invocations/month
       const avgDuration = 100; // 100ms average
       cost = (memory / 1024) * (avgDuration / 1000) * estimatedInvocations * AWS_PRICING.services.lambda_gb_second;
-      confidence = 65;
+      confidence = 0.65;
     }
 
     // DynamoDB Tables
@@ -175,14 +182,14 @@ export function estimateCost(resources: TerraformResource[]): CostPrediction {
       const writeCapacity = parseInt(resource.attributes.write_capacity) || 5;
       cost = (readCapacity * AWS_PRICING.services.dynamodb_rcu) + 
              (writeCapacity * AWS_PRICING.services.dynamodb_wcu);
-      confidence = 80;
+      confidence = 0.80;
     }
 
     // ECS/EKS Clusters
     else if (resource.type === 'aws_ecs_cluster' || resource.type === 'aws_eks_cluster') {
       category = 'Container';
       cost = resource.type === 'aws_eks_cluster' ? 73 : 0; // EKS control plane cost
-      confidence = 75;
+      confidence = 0.75;
     }
 
     resourceCosts.push({
