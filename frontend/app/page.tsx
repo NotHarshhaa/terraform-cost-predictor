@@ -19,6 +19,7 @@ import { predictCost, type PredictionResult } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const GithubIcon = ({ className }: { className?: string }) => (
   <svg className={className} fill="currentColor" viewBox="0 0 24 24">
@@ -59,14 +60,17 @@ export default function Home() {
               <p className="text-xs text-muted-foreground">ML-powered infrastructure cost estimation</p>
             </div>
           </div>
-          <a
-            href="https://github.com/NotHarshhaa/terraform-cost-predictor"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <GithubIcon className="h-5 w-5" />
-          </a>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <a
+              href="https://github.com/NotHarshhaa/terraform-cost-predictor"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <GithubIcon className="h-5 w-5" />
+            </a>
+          </div>
         </div>
       </header>
 
