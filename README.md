@@ -113,14 +113,49 @@ terraform-cost-predictor/
 
 ---
 
+## Architecture
+
+This project uses a **unified deployment architecture** where:
+- **Frontend (Next.js)** serves the UI and acts as an API gateway
+- **Backend (Python/FastAPI)** handles ML predictions and Terraform parsing
+- **Next.js API Routes** proxy requests from frontend to backend
+- **Single entry point** at `http://localhost:3000` for users
+
+### Benefits
+✅ **Single deployment** - Users only need to access the frontend  
+✅ **Internal communication** - Backend is not exposed externally  
+✅ **Better security** - API routes can add authentication/rate limiting  
+✅ **Simplified deployment** - One URL for the entire application  
+
+---
+
 ## Quick Start
 
 ### Prerequisites
 - **Node.js** 18+ and npm
 - **Python** 3.11+
-- (Optional) **Docker** and Docker Compose
+- **Docker** and Docker Compose (recommended)
 
-### 1. Train the ML Model (First Time Only)
+### Option 1: Docker Compose (Recommended) 🐳
+
+```bash
+# 1. Train the ML model (first time only)
+cd backend
+pip install -r requirements.txt
+python train_model.py --samples 10000
+cd ..
+
+# 2. Start both services with Docker
+docker-compose up --build
+```
+
+**Access the application at `http://localhost:3000`**
+
+The frontend automatically connects to the backend internally. No need to access backend separately!
+
+### Option 2: Manual Setup (Development)
+
+#### 1. Train the ML Model (First Time Only)
 
 ```bash
 cd backend
@@ -134,7 +169,7 @@ This will:
 - Train 6 ML algorithms (Random Forest, Gradient Boosting, etc.)
 - Select and save the best model (typically Random Forest with R²: 0.9999)
 
-### 2. Start Backend API
+#### 2. Start Backend API
 
 ```bash
 cd backend
@@ -143,21 +178,16 @@ uvicorn app:app --reload
 
 The API will be available at `http://localhost:8000`. Swagger docs at `http://localhost:8000/docs`.
 
-### 3. Start Frontend UI
+#### 3. Start Frontend UI
 
 ```bash
 cd frontend
+cp .env.local.example .env.local
 npm install
 npm run dev
 ```
 
-The UI will be available at `http://localhost:3000`.
-
-### 4. Docker (Alternative)
-
-```bash
-docker-compose up --build
-```
+The UI will be available at `http://localhost:3000` and will proxy requests to the backend.
 
 ---
 
@@ -247,12 +277,24 @@ python train_model.py --samples 50000 --hyperparameter-tuning --force-regenerate
 
 ## API Endpoints
 
+### Frontend API Routes (Next.js)
+Users interact with these endpoints at `http://localhost:3000`:
+
 | Method | Endpoint              | Description                          |
 |--------|-----------------------|--------------------------------------|
 | POST   | `/api/predict`        | Upload .tf files and predict cost    |
-| GET    | `/api/model/info`     | Get ML model information             |
-| POST   | `/api/parse`          | Parse .tf files without prediction   |
-| GET    | `/api/health`         | Health check                         |
+| GET    | `/api/health`         | Check backend connection status      |
+
+### Backend API (Internal)
+Backend runs at `http://localhost:8000` (accessed internally by Next.js):
+
+| Method | Endpoint              | Description                          |
+|--------|-----------------------|--------------------------------------|
+| POST   | `/predict`            | ML cost prediction endpoint          |
+| GET    | `/model/info`         | Get ML model information             |
+| POST   | `/parse`              | Parse .tf files without prediction   |
+| GET    | `/health`             | Backend health check                 |
+| GET    | `/docs`               | Swagger API documentation            |
 
 ---
 

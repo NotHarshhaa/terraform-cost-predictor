@@ -1,5 +1,3 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
 export interface ResourceCost {
   resource_type: string;
   resource_name: string;
@@ -21,13 +19,20 @@ export interface PredictionResult {
   processing_time: number;
 }
 
+export interface HealthStatus {
+  status: string;
+  backend: string;
+  message?: string;
+  backendHealth?: any;
+}
+
 export async function predictCost(files: File[]): Promise<PredictionResult> {
   const formData = new FormData();
   files.forEach((file) => {
     formData.append("files", file);
   });
 
-  const response = await fetch(`${API_BASE_URL}/predict`, {
+  const response = await fetch("/api/predict", {
     method: "POST",
     body: formData,
   });
@@ -37,5 +42,10 @@ export async function predictCost(files: File[]): Promise<PredictionResult> {
     throw new Error(error.detail || "Failed to analyze Terraform configuration");
   }
 
+  return response.json();
+}
+
+export async function checkHealth(): Promise<HealthStatus> {
+  const response = await fetch("/api/health");
   return response.json();
 }
