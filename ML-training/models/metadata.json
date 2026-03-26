@@ -1,7 +1,7 @@
 {
   "model_type": "Gradient Boosting Regressor",
   "feature_count": 26,
-  "training_date": "2026-03-17T10:37:45.929455",
-  "best_model_r2": 0.9998752191568642,
-  "best_model_rmse": 13.33929232018738
+  "training_date": "2026-03-26T12:07:35.689564",
+  "best_model_r2": 0.999892280929836,
+  "best_model_rmse": 12.639987468857536
 }

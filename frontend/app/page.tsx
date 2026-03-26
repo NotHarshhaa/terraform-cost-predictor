@@ -15,6 +15,7 @@ import {
   FileText} from "lucide-react";
 import FileUploader from "@/components/file-uploader";
 import CostDashboard from "@/components/cost-dashboard";
+import LandingPage from "@/components/landing-page";
 import { predictCost, type PredictionResult } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
@@ -79,27 +80,34 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-5xl">
+      <main className={result || error ? "container mx-auto px-4 py-8 max-w-5xl" : ""}>
         {!result && !error && (
-          <div className="text-center mb-10">
-            <Badge variant="secondary" className="mb-4">
-              <Zap className="h-3.5 w-3.5 mr-2" />
-              ML-Powered Cost Prediction
-            </Badge>
-            <h2 className="text-3xl md:text-4xl font-bold mb-3">
-              Predict Cloud Costs from
-              <span className="text-primary"> Terraform</span>
-            </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Upload your Terraform configuration files and get instant cost estimates
-              powered by machine learning. Know your infrastructure costs before deployment.
-            </p>
-          </div>
+          <LandingPage 
+            fileUploadSection={
+              <section id="file-upload-section" className="py-16 md:py-24 bg-gradient-to-b from-background to-muted/30">
+                <div className="container mx-auto px-4 max-w-5xl">
+                  <div className="text-center mb-8">
+                    <Badge variant="secondary" className="mb-4">
+                      <Zap className="h-3.5 w-3.5 mr-2" />
+                      Start Your Analysis
+                    </Badge>
+                    <h2 className="text-3xl md:text-4xl font-bold mb-4">Try It Now</h2>
+                    <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
+                      Upload your Terraform files and get instant ML-powered cost predictions
+                    </p>
+                  </div>
+                  <FileUploader onAnalyze={handleAnalyze} onClear={handleClearAll} isLoading={isLoading} />
+                </div>
+              </section>
+            }
+          />
         )}
 
-        <div className="mb-8">
-          <FileUploader onAnalyze={handleAnalyze} onClear={handleClearAll} isLoading={isLoading} />
-        </div>
+        {(result || error) && (
+          <div className="mb-8">
+            <FileUploader onAnalyze={handleAnalyze} onClear={handleClearAll} isLoading={isLoading} />
+          </div>
+        )}
 
         {error && (
           <Card className="mb-8 border-destructive/50 bg-destructive/5">
@@ -119,168 +127,11 @@ export default function Home() {
         )}
 
         {result && <CostDashboard result={result} />}
-
-        {!result && !error && (
-          <>
-            <section className="mt-20">
-              <div className="text-center mb-12">
-                <h2 className="text-3xl font-bold mb-4">How It Works</h2>
-                <p className="text-muted-foreground max-w-2xl mx-auto">
-                  Our ML-powered platform analyzes your Terraform configurations using trained models to provide accurate cost predictions before deployment.
-                </p>
-              </div>
-            </section>
-
-            <section className="mt-20 mb-20">
-              <div className="max-w-4xl mx-auto">
-                <Card className="bg-gradient-to-br from-primary/5 to-secondary/5 border-primary/20">
-                  <CardContent className="p-8">
-                    <div className="flex flex-col md:flex-row items-center gap-6">
-                      <div className="flex-shrink-0">
-                        <img
-                          src="https://github.com/NotHarshhaa.png"
-                          alt="H A R S H H A A"
-                          className="w-24 h-24 rounded-full border-4 border-primary/20 shadow-lg"
-                        />
-                      </div>
-                      <div className="flex-1 text-center md:text-left">
-                        <h3 className="text-2xl font-bold mb-2 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                          H A R S H H A A
-                        </h3>
-                        <p className="text-muted-foreground leading-relaxed">
-                          A passionate DevOps Engineer, MLOps specialist, and Platform Engineering expert on a mission to automate everything, scale cloud infrastructures efficiently, and build internal development platforms that empower engineering teams.
-                        </p>
-                        <div className="flex flex-wrap gap-2 mt-4 justify-center md:justify-start">
-                          <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20">
-                            DevOps
-                          </Badge>
-                          <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20">
-                            MLOps
-                          </Badge>
-                          <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20">
-                            Platform Engineering
-                          </Badge>
-                          <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20">
-                            Cloud Architecture
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </section>
-
-            <section className="mt-20">
-              <div className="text-center mb-12">
-                <h2 className="text-3xl font-bold mb-4">How It Works</h2>
-                <p className="text-muted-foreground max-w-2xl mx-auto">
-                  Get accurate cost predictions in three simple steps
-                </p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <Card>
-                  <CardContent className="pt-6 text-center">
-                    <div className="rounded-full bg-primary/10 text-primary w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                      <FileText className="h-8 w-8" />
-                    </div>
-                    <CardTitle className="mb-2">1. Upload Files</CardTitle>
-                    <CardDescription>
-                      Drag and drop your Terraform configuration files (.tf) or browse to select them
-                    </CardDescription>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-6 text-center">
-                    <div className="rounded-full bg-primary/10 text-primary w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                      <Zap className="h-8 w-8" />
-                    </div>
-                    <CardTitle className="mb-2">2. AI Analysis</CardTitle>
-                    <CardDescription>
-                      Our ML model parses your infrastructure and extracts resource features
-                    </CardDescription>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-6 text-center">
-                    <div className="rounded-full bg-primary/10 text-primary w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                      <BarChart3 className="h-8 w-8" />
-                    </div>
-                    <CardTitle className="mb-2">3. Get Insights</CardTitle>
-                    <CardDescription>
-                      Receive detailed cost breakdowns with confidence scores and visualizations
-                    </CardDescription>
-                  </CardContent>
-                </Card>
-              </div>
-            </section>
-
-            <section className="mt-20">
-              <div className="text-center mb-12">
-                <h2 className="text-3xl font-bold mb-4">Supported AWS Resources</h2>
-                <p className="text-muted-foreground max-w-2xl mx-auto">
-                  Comprehensive support for major AWS infrastructure components
-                </p>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Card className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4 flex items-center gap-3">
-                    <Server className="h-5 w-5 text-blue-500" />
-                    <span className="font-medium">EC2 Instances</span>
-                  </CardContent>
-                </Card>
-                <Card className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4 flex items-center gap-3">
-                    <Database className="h-5 w-5 text-purple-500" />
-                    <span className="font-medium">RDS Databases</span>
-                  </CardContent>
-                </Card>
-                <Card className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4 flex items-center gap-3">
-                    <Cloud className="h-5 w-5 text-green-500" />
-                    <span className="font-medium">S3 Buckets</span>
-                  </CardContent>
-                </Card>
-                <Card className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4 flex items-center gap-3">
-                    <Globe className="h-5 w-5 text-cyan-500" />
-                    <span className="font-medium">Load Balancers</span>
-                  </CardContent>
-                </Card>
-              </div>
-            </section>
-
-            <section className="mt-20">
-              <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-0">
-                <CardContent className="p-8 md:p-12 text-center">
-                  <CardTitle className="text-3xl mb-4">Ready to Predict Your Costs?</CardTitle>
-                  <CardDescription className="text-base max-w-2xl mx-auto mb-8">
-                    Upload your Terraform files now and get instant cost predictions with detailed breakdowns
-                  </CardDescription>
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <Button 
-                      onClick={() => document.getElementById('file-upload')?.scrollIntoView({ behavior: 'smooth' })}
-                      size="lg"
-                    >
-                      <FileText className="h-5 w-5 mr-2" />
-                      Start Analyzing
-                      <ArrowRight className="h-5 w-5 ml-2" />
-                    </Button>
-                    <Button variant="outline" size="lg">
-                      <BookOpen className="h-5 w-5 mr-2" />
-                      View Documentation
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </section>
-          </>
-        )}
       </main>
 
       <footer className="border-t bg-muted/30 mt-16">
         <div className="container mx-auto px-4 py-8 text-center text-sm text-muted-foreground">
-          <p>&copy; 2024 Terraform Cost Predictor. Built with Next.js, FastAPI, and ML.</p>
+          <p>&copy; 2026 Terraform Cost Predictor. Built with Next.js, FastAPI, and ML.</p>
         </div>
       </footer>
     </div>
