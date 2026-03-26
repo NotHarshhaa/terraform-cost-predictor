@@ -47,6 +47,11 @@ export default function Home() {
     }
   };
 
+  const handleClearAll = () => {
+    setResult(null);
+    setError(null);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
       <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
@@ -93,7 +98,7 @@ export default function Home() {
         )}
 
         <div className="mb-8">
-          <FileUploader onAnalyze={handleAnalyze} isLoading={isLoading} />
+          <FileUploader onAnalyze={handleAnalyze} onClear={handleClearAll} isLoading={isLoading} />
         </div>
 
         {error && (

@@ -9,10 +9,11 @@ import { Badge } from "@/components/ui/badge";
 
 interface FileUploaderProps {
   onAnalyze: (files: File[]) => void;
+  onClear: () => void;
   isLoading: boolean;
 }
 
-export default function FileUploader({ onAnalyze, isLoading }: FileUploaderProps) {
+export default function FileUploader({ onAnalyze, onClear, isLoading }: FileUploaderProps) {
   const [files, setFiles] = useState<File[]>([]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -76,7 +77,10 @@ export default function FileUploader({ onAnalyze, isLoading }: FileUploaderProps
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setFiles([])}
+              onClick={() => {
+                setFiles([]);
+                onClear();
+              }}
               disabled={isLoading}
             >
               Clear All
