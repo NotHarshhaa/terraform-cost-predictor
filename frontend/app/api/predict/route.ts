@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { parseTerraformFiles, extractResourceDetails } from '@/lib/parser';
-import { estimateCost } from '@/lib/estimator';
+import { parseTerraformFiles } from '@/lib/parser';
+import { estimateCostML } from '@/lib/estimator';
 
 export async function POST(request: NextRequest) {
   try {
@@ -49,8 +49,8 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Estimate costs
-    const prediction = estimateCost(parsed.resources);
+    // Estimate costs using ML-powered prediction
+    const prediction = await estimateCostML(parsed.resources);
 
     return NextResponse.json({
       ...prediction,
