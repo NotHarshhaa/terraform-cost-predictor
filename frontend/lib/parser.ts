@@ -17,7 +17,7 @@ export async function parseTerraformFiles(files: Record<string, string>): Promis
     try {
       console.log(`Parsing file: ${filename}`);
       
-      // Simple regex-based parser for Terraform resources
+      // Enhanced regex-based parser for Terraform resources
       const resourceRegex = /resource\s+"([^"]+)"\s+"([^"]+)"\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/g;
       let match;
       
@@ -31,7 +31,7 @@ export async function parseTerraformFiles(files: Record<string, string>): Promis
         // Extract attributes from resource body
         const attributes: Record<string, any> = {};
         
-        // Extract simple key-value pairs
+        // Extract simple key-value pairs (strings)
         const attrRegex = /(\w+)\s*=\s*"([^"]*)"/g;
         let attrMatch;
         while ((attrMatch = attrRegex.exec(resourceBody)) !== null) {
@@ -39,10 +39,11 @@ export async function parseTerraformFiles(files: Record<string, string>): Promis
         }
         
         // Extract numeric values
-        const numRegex = /(\w+)\s*=\s*(\d+)/g;
+        const numRegex = /(\w+)\s*=\s*(\d+\.?\d*)/g;
         let numMatch;
         while ((numMatch = numRegex.exec(resourceBody)) !== null) {
-          attributes[numMatch[1]] = parseInt(numMatch[2]);
+          const value = numMatch[2];
+          attributes[numMatch[1]] = value.includes('.') ? parseFloat(value) : parseInt(value);
         }
         
         // Extract boolean values
@@ -50,6 +51,27 @@ export async function parseTerraformFiles(files: Record<string, string>): Promis
         let boolMatch;
         while ((boolMatch = boolRegex.exec(resourceBody)) !== null) {
           attributes[boolMatch[1]] = boolMatch[2] === 'true';
+        }
+        
+        // Extract list values [...]
+        const listRegex = /(\w+)\s*=\s*\[(.*?)\]/g;
+        let listMatch;
+        while ((listMatch = listRegex.exec(resourceBody)) !== null) {
+          const items = listMatch[2].split(',').map(item => item.trim().replace(/"/g, ''));
+          attributes[listMatch[1]] = items.filter(item => item.length > 0);
+        }
+        
+        // Extract count attribute for resource multiplication
+        if (attributes.count) {
+          attributes._count = parseInt(attributes.count as string) || 1;
+        } else {
+          attributes._count = 1;
+        }
+        
+        // Extract availability_zone, region, etc.
+        if (resourceBody.includes('availability_zone')) {
+          const azMatch = resourceBody.match(/availability_zone\s*=\s*"([^"]*)"/);
+          if (azMatch) attributes.availability_zone = azMatch[1];
         }
         
         resources.push({
