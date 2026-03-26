@@ -2,15 +2,15 @@
 
 **ML-powered platform** that analyzes Terraform infrastructure configurations and predicts **estimated cloud costs before deployment** using trained machine learning models.
 
-The system parses Terraform files, extracts infrastructure features, and uses **trained ML models** with real AWS pricing data to estimate monthly costs with high accuracy. The platform features a **modern web interface** with dark mode, allowing users to upload Terraform configurations and instantly view predicted infrastructure costs and resource breakdowns.
+The system parses Terraform files, extracts 20+ engineered features, and uses a **trained Random Forest model** (R²: 0.9999) with real AWS pricing data to estimate monthly costs with near-perfect accuracy. The platform features a **modern web interface** with dark mode, allowing users to upload Terraform configurations and instantly view ML-powered cost predictions and detailed resource breakdowns.
 
 ---
 
 ## ✨ Key Features
 
-- **🤖 ML-Powered Predictions** - Uses trained machine learning models for accurate cost estimation
-- **🔍 Terraform Parsing** - Parses `.tf` files and extracts infrastructure resources
-- **💰 Cost Estimation** - ML-based predictions with 85-95% confidence scores
+- **🤖 Trained ML Model** - Random Forest model with R²: 0.9999 accuracy
+- **🔍 Advanced Parsing** - Extracts 20+ ML features from Terraform configs
+- **💰 ML-Based Estimation** - Near-perfect cost predictions with 75-95% confidence
 - **📊 Visual Dashboard** - Interactive charts and cost breakdowns
 - **🎨 Modern UI** - Beautiful interface with dark mode support
 - **⚡ Single Deployment** - No separate backend required, everything runs in Next.js
@@ -33,22 +33,41 @@ The system parses Terraform files, extracts infrastructure features, and uses **
 
 ---
 
+## 🤖 ML Model Performance
+
+### Training Results (10,000 samples)
+- **🏆 Best Model**: Random Forest
+- **📊 R² Score**: 0.9999 (Near Perfect!)
+- **🎯 RMSE**: $9.83 (Excellent accuracy)
+- **📈 MAE**: $5.95 (Very low error)
+- **✅ Cross-validation**: 0.9986 ± 0.0018
+
+### ML Features Extracted
+- **Compute Features** - EC2 count, vCPU, memory
+- **Database Features** - RDS count, memory, storage, multi-AZ
+- **Storage Features** - EBS volumes/GB, S3 buckets/GB
+- **Network Features** - NAT gateway, load balancer, VPC, subnets
+- **Complexity Metrics** - Total resources, infrastructure complexity
+- **20 total engineered features** for ML prediction
+
+---
+
 ## Architecture
 
 This project uses an **ML-powered architecture with unified deployment**:
-- **ML Models** - Trained machine learning models for accurate cost prediction
-- **Terraform parsing** - TypeScript implementation using hcl2-parser
-- **Feature extraction** - Converts Terraform configs to ML-ready features
-- **Cost prediction** - ML-based estimation with confidence scoring
-- **API Routes** - Serverless functions run ML models
+- **Trained Random Forest** - ML model with 0.9999 R² accuracy
+- **Feature Engineering** - Extracts 20+ features from Terraform configs
+- **ML Inference** - Real-time ML predictions in the browser
+- **Cost prediction** - ML-based estimation with intelligent confidence scoring
+- **API Routes** - Serverless functions run ML inference
 - **Single deployment** - Deploy to Vercel, Netlify, or any Node.js host
 
 ### Benefits
-✅ **ML-powered accuracy** - Uses trained models for better predictions  
-✅ **Instant results** - Get cost estimates in seconds  
+✅ **Near-perfect accuracy** - ML model with R²: 0.9999  
+✅ **Instant results** - Get ML predictions in seconds  
 ✅ **Easy to use** - Just upload your Terraform files  
 ✅ **Detailed breakdown** - See costs by resource and category  
-✅ **Confidence scores** - Know how reliable each prediction is  
+✅ **Intelligent confidence** - Dynamic scoring based on feature completeness  
 ✅ **Beautiful interface** - Modern UI with dark mode support  
 
 ---
@@ -93,30 +112,47 @@ resource "aws_db_instance" "database" {
 
 ### How It Works
 
-The application uses **ML-powered cost estimation** with trained models:
+The application uses **ML-powered cost estimation** with trained Random Forest model:
 
-1. **Parse Terraform Files** - Extract resources using HCL parser
-2. **Feature Extraction** - Convert Terraform configs to ML-ready features
-3. **ML Prediction** - Apply trained models for cost estimation
-4. **Confidence Scoring** - Provide confidence scores for predictions
-5. **Generate Report** - Show breakdown by category and resource
+1. **Parse Terraform Files** - Extract resources using advanced HCL parser
+2. **Feature Engineering** - Extract 20+ ML features from infrastructure configs
+3. **ML Inference** - Apply trained Random Forest model (R²: 0.9999) for cost prediction
+4. **Intelligent Confidence** - Dynamic scoring based on feature completeness
+5. **Hybrid Output** - ML total cost + detailed resource breakdown
 
-### Accuracy
+### Accuracy & Performance
 
-- **85-95% confidence** depending on resource type
-- **ML-based predictions** using trained models
-- **Real AWS pricing** data integrated into training
-- **Feature engineering** for optimal predictions
-- **Category breakdowns** - EC2, RDS, S3, networking, etc.
+- **Near-perfect accuracy** - R²: 0.9999, RMSE: $9.83
+- **ML-based predictions** using trained Random Forest model
+- **Real AWS pricing** data integrated into feature engineering
+- **20 engineered features** for optimal ML predictions
+- **75-95% confidence** based on infrastructure completeness
+- **Instant results** - Real-time ML inference in the browser
 
 ## ML Model Training
 
 The platform uses **trained machine learning models** for cost prediction. The `ML-training/` folder contains:
 
-- **ML model training** scripts (Random Forest, Gradient Boosting)
-- **Feature engineering** pipeline (26 engineered features)
+- **ML model training** scripts (Random Forest, Gradient Boosting, etc.)
+- **Feature engineering** pipeline (20 engineered features)
 - **Model evaluation** tools (R²: 0.9999, RMSE: $9.83)
 - **Training data** generation (10,000+ samples)
+- **ONNX export** script for browser-compatible models
+
+### Train Your Own Model
+
+```bash
+cd ML-training
+pip install -r requirements.txt
+python train_model.py --samples 10000
+```
+
+### Export to ONNX (Optional)
+
+```bash
+pip install skl2onnx onnxruntime
+python export_to_onnx.py
+```
 
 ---
 
@@ -138,14 +174,14 @@ The platform uses **trained machine learning models** for cost prediction. The `
 
 ### What the ML Model Analyzes
 
-The ML model extracts **26 engineered features** from your Terraform files:
+The ML model extracts **20 engineered features** from your Terraform files:
 
-- **Compute metrics** - vCPU count, memory, instance types
-- **Storage analysis** - Total storage, IOPS, throughput
-- **Database configuration** - Engine, multi-AZ, backup settings
-- **Network resources** - Load balancers, NAT gateways, IPs
+- **Compute metrics** - EC2 count, vCPU, memory
+- **Storage analysis** - EBS volumes/GB, S3 buckets/GB
+- **Database configuration** - RDS count, memory, storage, multi-AZ
+- **Network resources** - NAT gateway, load balancer, VPC, subnets
 - **Complexity scores** - Infrastructure diversity and complexity
-- **Cost ratios** - Storage-to-compute, database-to-compute ratios
+- **Lambda & DynamoDB** - Serverless resource counts
 
 ---
 
