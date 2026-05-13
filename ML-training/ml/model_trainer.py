@@ -29,6 +29,7 @@ class CostModelTrainer:
         self.scaler = StandardScaler()
         self.models = {}
         self.best_model = None
+        self.best_model_name = None
         self.feature_columns = []
         self.metrics = {}
         
@@ -148,6 +149,7 @@ class CostModelTrainer:
         # Select best model based on R² score
         best_model_name = max(results.keys(), key=lambda k: results[k]['r2'])
         self.best_model = results[best_model_name]['model']
+        self.best_model_name = best_model_name
         
         print(f"\n🏆 Best model: {best_model_name}")
         print(f"   R²: {results[best_model_name]['r2']:.4f}")
@@ -223,11 +225,11 @@ class CostModelTrainer:
         
         # Save model metadata
         metadata = {
-            'model_type': 'Gradient Boosting Regressor',
+            'model_type': self.best_model_name,
             'feature_count': len(self.feature_columns),
             'training_date': datetime.now().isoformat(),
-            'best_model_r2': self.metrics['Gradient Boosting']['r2'],
-            'best_model_rmse': self.metrics['Gradient Boosting']['rmse']
+            'best_model_r2': self.metrics[self.best_model_name]['r2'],
+            'best_model_rmse': self.metrics[self.best_model_name]['rmse']
         }
         
         with open(os.path.join(self.model_dir, 'metadata.json'), 'w') as f:
@@ -249,6 +251,14 @@ class CostModelTrainer:
         # Load metrics
         with open(os.path.join(self.model_dir, 'metrics.json'), 'r') as f:
             self.metrics = json.load(f)
+        
+        # Load metadata to get best model name
+        try:
+            with open(os.path.join(self.model_dir, 'metadata.json'), 'r') as f:
+                metadata = json.load(f)
+                self.best_model_name = metadata.get('model_type', 'Random Forest')
+        except FileNotFoundError:
+            self.best_model_name = 'Random Forest'
         
         print("Models loaded successfully")
     
@@ -275,12 +285,13 @@ class CostModelTrainer:
         prediction = self.best_model.predict(feature_df)[0]
         
         # Get prediction confidence (based on training performance)
-        confidence = min(95.0, self.metrics['Gradient Boosting']['r2'] * 100)
+        model_name = self.best_model_name if self.best_model_name else 'Random Forest'
+        confidence = min(95.0, self.metrics[model_name]['r2'] * 100)
         
         return {
             'predicted_cost': max(0, prediction),  # Ensure non-negative
             'confidence_score': confidence,
-            'model_type': 'Trained Gradient Boosting',
+            'model_type': f'Trained {model_name}',
             'feature_importance': self._get_feature_importance()
         }
     

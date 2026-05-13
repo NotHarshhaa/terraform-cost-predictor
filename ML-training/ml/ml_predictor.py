@@ -24,6 +24,7 @@ class MLPredictor:
         self.model = None
         self.feature_columns = []
         self.metrics = {}
+        self.best_model_name = None
         self.is_loaded = False
         
         # Try to load the model
@@ -35,6 +36,7 @@ class MLPredictor:
             model_path = os.path.join(self.model_dir, 'best_model.joblib')
             features_path = os.path.join(self.model_dir, 'features.json')
             metrics_path = os.path.join(self.model_dir, 'metrics.json')
+            metadata_path = os.path.join(self.model_dir, 'metadata.json')
             
             if not all(os.path.exists(p) for p in [model_path, features_path, metrics_path]):
                 logger.warning("Trained model not found. Please run training first.")
@@ -50,6 +52,14 @@ class MLPredictor:
             # Load metrics
             with open(metrics_path, 'r') as f:
                 self.metrics = json.load(f)
+            
+            # Load metadata to get best model name
+            try:
+                with open(metadata_path, 'r') as f:
+                    metadata = json.load(f)
+                    self.best_model_name = metadata.get('model_type', 'Random Forest')
+            except FileNotFoundError:
+                self.best_model_name = 'Random Forest'
             
             self.is_loaded = True
             logger.info("ML model loaded successfully")
@@ -94,7 +104,7 @@ class MLPredictor:
                 'estimated_monthly_cost': round(prediction['cost'], 2),
                 'confidence_score': confidence,
                 'breakdown': breakdown,
-                'model_type': 'Trained Gradient Boosting Regressor',
+                'model_type': f'Trained {self.best_model_name}',
                 'currency': 'USD',
                 'feature_importance': prediction.get('feature_importance', {}),
                 'prediction_method': 'ml'
@@ -294,7 +304,8 @@ class MLPredictor:
     def _calculate_confidence(self, features: Dict[str, Any], resource_details: List[Dict[str, Any]]) -> float:
         """Calculate prediction confidence score."""
         # Base confidence from model performance
-        base_confidence = self.metrics.get('Gradient Boosting', {}).get('r2', 0.8) * 100
+        model_name = self.best_model_name if self.best_model_name else 'Random Forest'
+        base_confidence = self.metrics.get(model_name, {}).get('r2', 0.8) * 100
         
         # Adjust based on feature coverage
         known_resources = sum(1 for r in resource_details if r.get('category') != 'Other')
@@ -372,8 +383,8 @@ class MLPredictor:
                 'feature_count': len(self.feature_columns),
                 'training_date': metadata.get('training_date', 'Unknown'),
                 'performance': {
-                    'r2_score': self.metrics.get('Gradient Boosting', {}).get('r2', 0),
-                    'rmse': self.metrics.get('Gradient Boosting', {}).get('rmse', 0)
+                    'r2_score': self.metrics.get(self.best_model_name, {}).get('r2', 0),
+                    'rmse': self.metrics.get(self.best_model_name, {}).get('rmse', 0)
                 }
             }
         except Exception as e:

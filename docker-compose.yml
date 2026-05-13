@@ -1,26 +1,6 @@
 version: "3.8"
 
 services:
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    expose:
-      - "8000"
-    volumes:
-      - ./backend:/app
-    environment:
-      - PYTHONUNBUFFERED=1
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    restart: unless-stopped
-    networks:
-      - app-network
-
   frontend:
     build:
       context: ./frontend
@@ -28,11 +8,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - BACKEND_URL=http://backend:8000
       - NODE_ENV=production
-    depends_on:
-      backend:
-        condition: service_healthy
     restart: unless-stopped
     networks:
       - app-network

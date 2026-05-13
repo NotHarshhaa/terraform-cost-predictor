@@ -17,8 +17,8 @@ export async function parseTerraformFiles(files: Record<string, string>): Promis
     try {
       console.log(`Parsing file: ${filename}`);
       
-      // Enhanced regex-based parser for Terraform resources
-      const resourceRegex = /resource\s+"([^"]+)"\s+"([^"]+)"\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/g;
+      // Enhanced regex-based parser for Terraform resources with better nested block handling
+      const resourceRegex = /resource\s+"([^"]+)"\s+"([^"]+)"\s*\{([^}]*(?:\{[^{}]*\}[^{}]*)*)\}/gs;
       let match;
       
       while ((match = resourceRegex.exec(content)) !== null) {
@@ -54,7 +54,7 @@ export async function parseTerraformFiles(files: Record<string, string>): Promis
         }
         
         // Extract list values [...]
-        const listRegex = /(\w+)\s*=\s*\[(.*?)\]/g;
+        const listRegex = /(\w+)\s*=\s*\[([^\]]*)\]/g;
         let listMatch;
         while ((listMatch = listRegex.exec(resourceBody)) !== null) {
           const items = listMatch[2].split(',').map(item => item.trim().replace(/"/g, ''));

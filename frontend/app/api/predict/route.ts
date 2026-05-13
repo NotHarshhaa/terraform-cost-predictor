@@ -21,8 +21,16 @@ export async function POST(request: NextRequest) {
       if (!file.name.endsWith('.tf')) {
         continue;
       }
-      const content = await file.text();
-      tfFiles[file.name] = content;
+      try {
+        const content = await file.text();
+        tfFiles[file.name] = content;
+      } catch (readError) {
+        console.error(`Error reading file ${file.name}:`, readError);
+        return NextResponse.json(
+          { detail: `Failed to read file: ${file.name}` },
+          { status: 400 }
+        );
+      }
     }
 
     if (Object.keys(tfFiles).length === 0) {
@@ -33,7 +41,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse Terraform files
-    const parsed = await parseTerraformFiles(tfFiles);
+    let parsed;
+    try {
+      parsed = await parseTerraformFiles(tfFiles);
+    } catch (parseError) {
+      console.error('Error parsing Terraform files:', parseError);
+      return NextResponse.json(
+        { detail: 'Failed to parse Terraform files. Please check the file format.' },
+        { status: 400 }
+      );
+    }
 
     if (parsed.resources.length === 0) {
       return NextResponse.json({
@@ -50,7 +67,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Estimate costs using ML-powered prediction
-    const prediction = await estimateCostML(parsed.resources);
+    let prediction;
+    try {
+      prediction = await estimateCostML(parsed.resources);
+    } catch (estimationError) {
+      console.error('Error during cost estimation:', estimationError);
+      return NextResponse.json(
+        { detail: 'Failed to estimate costs. Please try again.' },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       ...prediction,
