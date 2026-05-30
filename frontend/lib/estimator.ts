@@ -395,7 +395,7 @@ export function estimateCost(resources: TerraformResource[]): CostPrediction {
 
   return {
     total_estimated_cost,
-    confidence_score: parseFloat((avgConfidence * 100).toFixed(1)), // Convert decimal to percentage
+    confidence_score: parseFloat(avgConfidence.toFixed(4)),
     resources: resourceCosts,
     category_breakdown,
     processing_time: processingTime / 1000,

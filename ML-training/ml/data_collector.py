@@ -223,6 +223,32 @@ class AWSPricingCollector:
         # Add some realistic variance
         total_cost *= random.uniform(0.95, 1.05)  # ±5% variance
         
+        # RDS storage calculation
+        rds_total_storage = 0
+        if num_rds > 0:
+            for _ in range(num_rds):
+                rds_total_storage += random.randint(20, 500)
+            # Add storage cost to RDS
+            rds_cost += rds_total_storage * storage_pricing['ebs']['gp2']['per_gb_month']
+            total_cost = ec2_cost + rds_cost + ebs_cost + s3_cost + networking_cost
+            total_cost *= random.uniform(0.95, 1.05)
+
+        # Additional infrastructure
+        has_vpc = random.choice([True, False])
+        subnet_count = random.randint(0, 6) if has_vpc else 0
+        lambda_count = random.randint(0, 5)
+        dynamodb_count = random.randint(0, 3)
+
+        # Lambda costs (estimate)
+        lambda_cost = lambda_count * random.uniform(2, 20)
+        # DynamoDB costs (estimate)
+        dynamodb_cost = dynamodb_count * random.uniform(5, 50)
+        total_cost += lambda_cost + dynamodb_cost
+
+        total_resources = (num_ec2 + num_rds + num_ebs_volumes + num_s3_buckets +
+                          int(has_nat_gateway) + int(has_load_balancer) +
+                          int(has_vpc) + subnet_count + lambda_count + dynamodb_count)
+
         return {
             # Features
             'ec2_count': num_ec2,
@@ -230,6 +256,7 @@ class AWSPricingCollector:
             'ec2_total_vcpu': ec2_vcpu_total,
             'rds_count': num_rds,
             'rds_total_memory': rds_memory_total,
+            'rds_total_storage': rds_total_storage,
             'rds_multi_az': int(rds_multi_az),
             'ebs_volume_count': num_ebs_volumes,
             'ebs_total_gb': ebs_total_gb,
@@ -237,7 +264,11 @@ class AWSPricingCollector:
             's3_total_gb': s3_total_gb,
             'has_nat_gateway': int(has_nat_gateway),
             'has_load_balancer': int(has_load_balancer),
-            'total_resources': num_ec2 + num_rds + num_ebs_volumes + num_s3_buckets + int(has_nat_gateway) + int(has_load_balancer),
+            'has_vpc': int(has_vpc),
+            'subnet_count': subnet_count,
+            'lambda_count': lambda_count,
+            'dynamodb_count': dynamodb_count,
+            'total_resources': total_resources,
             
             # Target
             'monthly_cost': round(total_cost, 2),

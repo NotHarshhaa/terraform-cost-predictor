@@ -16,7 +16,7 @@ const faqs = [
   },
   {
     question: "Is my Terraform configuration secure?",
-    answer: "Absolutely! All processing happens in your browser. Your Terraform files never leave your device or get uploaded to any server. We take your privacy and security seriously."
+    answer: "Absolutely! All processing happens within your own deployment. Your Terraform files are only sent to your own Next.js API routes — no data is shared with third parties."
   },
   {
     question: "How does the ML model work?",

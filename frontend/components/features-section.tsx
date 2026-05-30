@@ -38,7 +38,7 @@ const features = [
   {
     icon: Shield,
     title: "Secure & Private",
-    description: "Your Terraform files never leave your browser. All processing is client-side",
+    description: "All processing happens on your own server. No data is sent to third parties",
     color: "text-red-500"
   },
   {

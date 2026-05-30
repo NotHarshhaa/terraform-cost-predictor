@@ -43,8 +43,8 @@ class CostModelTrainer:
         # Feature engineering
         df = self._engineer_features(df)
         
-        # Define feature columns (excluding target)
-        self.feature_columns = [col for col in df.columns if col != 'monthly_cost']
+        # Define feature columns (excluding target and target-derived columns)
+        self.feature_columns = [col for col in df.columns if col not in ('monthly_cost', 'log_monthly_cost')]
         
         X = df[self.feature_columns]
         y = df['monthly_cost']

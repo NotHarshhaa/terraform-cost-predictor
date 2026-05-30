@@ -4,21 +4,12 @@ import { useState } from "react";
 import { 
   DollarSign, 
   Zap, 
-  AlertCircle, 
-  Cloud, 
-  BarChart3, 
-  Server,
-  Database,
-  Globe,
-  ArrowRight,
-  BookOpen,
-  FileText} from "lucide-react";
+  AlertCircle} from "lucide-react";
 import FileUploader from "@/components/file-uploader";
 import CostDashboard from "@/components/cost-dashboard";
 import LandingPage from "@/components/landing-page";
 import { predictCost, type PredictionResult } from "@/services/api";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -131,7 +122,7 @@ export default function Home() {
 
       <footer className="border-t bg-muted/30 mt-16">
         <div className="container mx-auto px-4 py-8 text-center text-sm text-muted-foreground">
-          <p>&copy; 2026 Terraform Cost Predictor. Built with Next.js, FastAPI, and ML.</p>
+          <p>&copy; 2025 Terraform Cost Predictor. Built with Next.js and ML.</p>
         </div>
       </footer>
     </div>
