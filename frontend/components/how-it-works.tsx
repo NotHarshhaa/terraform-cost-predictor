@@ -1,4 +1,5 @@
-import { Card, CardContent } from "@/components/ui/card";
+"use client";
+
 import { Upload, Cpu, BarChart3, CheckCircle } from "lucide-react";
 
 const steps = [
@@ -6,72 +7,85 @@ const steps = [
     icon: Upload,
     title: "Upload Terraform Files",
     description: "Drag & drop your .tf files or browse to select them. Supports multiple files and complex configurations.",
-    step: "01"
+    color: "text-blue-500",
+    bg: "bg-blue-500/10",
+    ring: "ring-blue-500/20",
   },
   {
     icon: Cpu,
     title: "ML Analysis",
-    description: "Our trained Random Forest model extracts 20+ features and predicts costs with 99.99% accuracy.",
-    step: "02"
+    description: "Our trained Random Forest model extracts 20+ features and predicts costs with near-perfect accuracy.",
+    color: "text-violet-500",
+    bg: "bg-violet-500/10",
+    ring: "ring-violet-500/20",
   },
   {
     icon: BarChart3,
     title: "View Results",
     description: "Get detailed cost breakdowns, visualizations, and confidence scores for each resource.",
-    step: "03"
+    color: "text-emerald-500",
+    bg: "bg-emerald-500/10",
+    ring: "ring-emerald-500/20",
   },
   {
     icon: CheckCircle,
     title: "Make Decisions",
     description: "Use insights to optimize your infrastructure and avoid costly surprises before deployment.",
-    step: "04"
-  }
+    color: "text-amber-500",
+    bg: "bg-amber-500/10",
+    ring: "ring-amber-500/20",
+  },
 ];
 
 export default function HowItWorks() {
   return (
-    <section className="py-16 md:py-24">
+    <section className="py-20 md:py-28">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+        <div className="text-center mb-14">
+          <h2 className="text-3xl md:text-5xl font-bold mb-4 tracking-tight">
             How It Works
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
             Get accurate cost predictions in 4 simple steps
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative pt-8">
-          {/* Connection lines for desktop */}
-          <div className="hidden lg:block absolute top-12 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/20 via-primary to-primary/20 -z-10" />
-          
-          {steps.map((step, index) => {
-            const Icon = step.icon;
-            return (
-              <div key={index} className="relative">
-                {/* Step number - positioned above card */}
-                <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground rounded-full w-12 h-12 flex items-center justify-center font-bold text-base shadow-lg z-10">
-                  {step.step}
-                </div>
-                
-                <Card className="border-2 hover:border-primary transition-all hover:shadow-lg h-full">
-                  <CardContent className="pt-10 pb-6 text-center">
-                  
-                  {/* Icon */}
-                  <div className="rounded-full bg-primary/10 p-4 w-fit mx-auto mb-4">
-                    <Icon className="h-8 w-8 text-primary" />
+        {/* Timeline layout */}
+        <div className="max-w-3xl mx-auto">
+          <div className="relative">
+            {/* Vertical line */}
+            <div className="absolute left-8 md:left-10 top-0 bottom-0 w-px bg-gradient-to-b from-primary/50 via-primary/20 to-transparent" />
+
+            <div className="space-y-8">
+              {steps.map((step, index) => {
+                const Icon = step.icon;
+                return (
+                  <div key={index} className="relative flex gap-6 md:gap-8 group">
+                    {/* Step indicator */}
+                    <div className="relative shrink-0">
+                      <div className={`relative z-10 flex items-center justify-center w-16 h-16 md:w-20 md:h-20 rounded-2xl ${step.bg} ring-4 ${step.ring} transition-all group-hover:scale-105 group-hover:shadow-lg`}>
+                        <Icon className={`h-7 w-7 md:h-8 md:w-8 ${step.color}`} />
+                      </div>
+                      {/* Step number */}
+                      <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shadow-md">
+                        {index + 1}
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 pt-2 md:pt-4 pb-4">
+                      <h3 className="text-lg md:text-xl font-semibold mb-2 group-hover:text-primary transition-colors">
+                        {step.title}
+                      </h3>
+                      <p className="text-muted-foreground leading-relaxed">
+                        {step.description}
+                      </p>
+                    </div>
                   </div>
-                  
-                  {/* Content */}
-                  <h3 className="font-semibold mb-2 text-lg">{step.title}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {step.description}
-                  </p>
-                </CardContent>
-              </Card>
+                );
+              })}
             </div>
-            );
-          })}
+          </div>
         </div>
       </div>
     </section>

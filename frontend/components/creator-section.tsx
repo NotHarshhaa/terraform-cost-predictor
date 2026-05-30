@@ -1,4 +1,5 @@
-import { Card, CardContent } from "@/components/ui/card";
+"use client";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Globe, Send } from "lucide-react";
@@ -17,115 +18,81 @@ const LinkedinIcon = ({ className }: { className?: string }) => (
 
 export default function CreatorSection() {
   return (
-    <section className="py-16 md:py-24 bg-gradient-to-b from-muted/30 to-background">
+    <section className="py-20 md:py-28 relative">
+      <div className="absolute inset-0 bg-gradient-to-b from-muted/30 to-background -z-10" />
+
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+        <div className="text-center mb-14">
+          <h2 className="text-3xl md:text-5xl font-bold mb-4 tracking-tight">
             Meet the Creator
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-muted-foreground text-lg">
             Built with passion for the DevOps and Cloud community
           </p>
         </div>
 
-        <div className="max-w-4xl mx-auto">
-          <Card className="border-2 hover:border-primary/50 transition-all overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-primary/10 -z-10" />
-            
-            <CardContent className="p-0">
-              <div className="flex flex-col md:flex-row items-center gap-8 p-8">
-                {/* Avatar Section */}
-                <div className="flex-shrink-0 relative group">
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/50 rounded-full blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />
-                  <img
-                    src="https://github.com/NotHarshhaa.png"
-                    alt="H A R S H H A A"
-                    className="relative w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-primary/20 shadow-2xl object-cover"
-                  />
-                  <div className="absolute -bottom-2 -right-2 bg-primary text-primary-foreground rounded-full p-2 shadow-lg">
-                    <GithubIcon className="h-5 w-5" />
-                  </div>
+        <div className="max-w-3xl mx-auto">
+          <div className="relative rounded-2xl border bg-card overflow-hidden">
+            {/* Background gradient */}
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-violet-500/5" />
+
+            <div className="relative flex flex-col md:flex-row items-center gap-8 p-8 md:p-10">
+              {/* Avatar */}
+              <div className="shrink-0 relative group">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary to-violet-500 rounded-full blur-xl opacity-30 group-hover:opacity-50 transition-opacity" />
+                <img
+                  src="https://github.com/NotHarshhaa.png"
+                  alt="H A R S H H A A"
+                  className="relative w-28 h-28 md:w-36 md:h-36 rounded-full border-4 border-background shadow-2xl object-cover"
+                />
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 text-center md:text-left">
+                <h3 className="text-2xl font-bold mb-1">H A R S H H A A</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  DevOps Engineer • MLOps Specialist • Platform Engineering
+                </p>
+
+                {/* Skills */}
+                <div className="flex flex-wrap gap-2 mb-6 justify-center md:justify-start">
+                  {["DevOps", "MLOps", "Platform Engineering", "Cloud Architecture", "Kubernetes"].map((skill) => (
+                    <Badge key={skill} variant="secondary" className="text-xs">
+                      {skill}
+                    </Badge>
+                  ))}
                 </div>
 
-                {/* Content Section */}
-                <div className="flex-1 text-center md:text-left">
-                  <h3 className="text-2xl md:text-3xl font-bold mb-2 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                    H A R S H H A A
-                  </h3>
-                  <p className="text-muted-foreground mb-4 leading-relaxed">
-                    A passionate <span className="text-foreground font-semibold">DevOps Engineer</span>, <span className="text-foreground font-semibold">MLOps specialist</span>, and <span className="text-foreground font-semibold">Platform Engineering expert</span> on a mission to automate everything, scale cloud infrastructures efficiently, and build internal development platforms that empower engineering teams.
-                  </p>
-
-                  {/* Skills */}
-                  <div className="flex flex-wrap gap-2 mb-6 justify-center md:justify-start">
-                    <Badge variant="secondary" className="bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 border-blue-500/20">
-                      DevOps
-                    </Badge>
-                    <Badge variant="secondary" className="bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 border-purple-500/20">
-                      MLOps
-                    </Badge>
-                    <Badge variant="secondary" className="bg-green-500/10 text-green-600 dark:text-green-400 hover:bg-green-500/20 border-green-500/20">
-                      Platform Engineering
-                    </Badge>
-                    <Badge variant="secondary" className="bg-orange-500/10 text-orange-600 dark:text-orange-400 hover:bg-orange-500/20 border-orange-500/20">
-                      Cloud Architecture
-                    </Badge>
-                    <Badge variant="secondary" className="bg-pink-500/10 text-pink-600 dark:text-pink-400 hover:bg-pink-500/20 border-pink-500/20">
-                      Kubernetes
-                    </Badge>
-                  </div>
-
-                  {/* Social Links */}
-                  <div className="flex flex-wrap gap-3 justify-center md:justify-start">
-                    <Button variant="outline" size="sm" asChild className="group">
-                      <a 
-                        href="https://github.com/NotHarshhaa" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2"
-                      >
-                        <GithubIcon className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                        GitHub
-                      </a>
-                    </Button>
-                    <Button variant="outline" size="sm" asChild className="group">
-                      <a 
-                        href="https://www.linkedin.com/in/harshhaa-vardhan-reddy/" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2"
-                      >
-                        <LinkedinIcon className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                        LinkedIn
-                      </a>
-                    </Button>
-                    <Button variant="outline" size="sm" asChild className="group">
-                      <a 
-                        href="https://blog.prodevopsguy.xyz" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2"
-                      >
-                        <Globe className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                        Blog
-                      </a>
-                    </Button>
-                    <Button variant="outline" size="sm" asChild className="group">
-                      <a 
-                        href="https://t.me/prodevopsguy" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2"
-                      >
-                        <Send className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                        Telegram
-                      </a>
-                    </Button>
-                  </div>
+                {/* Social Links */}
+                <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                  <Button variant="outline" size="sm" className="rounded-lg" asChild>
+                    <a href="https://github.com/NotHarshhaa" target="_blank" rel="noopener noreferrer">
+                      <GithubIcon className="h-4 w-4 mr-1.5" />
+                      GitHub
+                    </a>
+                  </Button>
+                  <Button variant="outline" size="sm" className="rounded-lg" asChild>
+                    <a href="https://www.linkedin.com/in/harshhaa-vardhan-reddy/" target="_blank" rel="noopener noreferrer">
+                      <LinkedinIcon className="h-4 w-4 mr-1.5" />
+                      LinkedIn
+                    </a>
+                  </Button>
+                  <Button variant="outline" size="sm" className="rounded-lg" asChild>
+                    <a href="https://blog.prodevopsguy.xyz" target="_blank" rel="noopener noreferrer">
+                      <Globe className="h-4 w-4 mr-1.5" />
+                      Blog
+                    </a>
+                  </Button>
+                  <Button variant="outline" size="sm" className="rounded-lg" asChild>
+                    <a href="https://t.me/prodevopsguy" target="_blank" rel="noopener noreferrer">
+                      <Send className="h-4 w-4 mr-1.5" />
+                      Telegram
+                    </a>
+                  </Button>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
     </section>

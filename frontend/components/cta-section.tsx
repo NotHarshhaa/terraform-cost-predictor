@@ -1,5 +1,6 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { ArrowRight, Star } from "lucide-react";
 
 const GithubIcon = ({ className }: { className?: string }) => (
@@ -10,32 +11,37 @@ const GithubIcon = ({ className }: { className?: string }) => (
 
 export default function CTASection() {
   return (
-    <section className="py-16 md:py-24">
+    <section className="py-20 md:py-28">
       <div className="container mx-auto px-4">
-        <Card className="relative overflow-hidden border-2 border-primary/20">
-          {/* Background gradient */}
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-primary/5 -z-10" />
-          
-          <div className="p-8 md:p-12 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+        <div className="relative overflow-hidden rounded-3xl border bg-gradient-to-br from-primary/10 via-card to-violet-500/10">
+          {/* Background decorations */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-violet-500/10 rounded-full translate-y-1/2 -translate-x-1/2 blur-3xl" />
+
+          <div className="relative p-10 md:p-16 text-center">
+            <h2 className="text-3xl md:text-5xl font-bold mb-4 tracking-tight">
               Ready to Predict Your AWS Costs?
             </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
-              Join developers who are using ML-powered predictions to save time and money. 
-              Start analyzing your Terraform configurations now - it's free!
+            <p className="text-muted-foreground max-w-2xl mx-auto mb-10 text-lg">
+              Start analyzing your Terraform configurations now — it&apos;s free and open-source!
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
-              <Button size="lg" className="group">
+              <Button
+                size="lg"
+                className="h-12 px-8 text-base font-semibold rounded-xl shadow-lg shadow-primary/25 group"
+                onClick={() => {
+                  document.getElementById('file-upload-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }}
+              >
                 Start Predicting Now
                 <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </Button>
-              <Button size="lg" variant="outline" asChild>
-                <a 
-                  href="https://github.com/NotHarshhaa/terraform-cost-predictor" 
+              <Button size="lg" variant="outline" className="h-12 px-8 rounded-xl" asChild>
+                <a
+                  href="https://github.com/NotHarshhaa/terraform-cost-predictor"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center"
                 >
                   <GithubIcon className="mr-2 h-4 w-4" />
                   View on GitHub
@@ -43,13 +49,12 @@ export default function CTASection() {
               </Button>
             </div>
 
-            {/* GitHub Stars */}
             <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-              <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+              <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
               <span>Star us on GitHub to support the project</span>
             </div>
           </div>
-        </Card>
+        </div>
       </div>
     </section>
   );
