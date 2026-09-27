@@ -75,7 +75,7 @@ export default function CostChart({ data, totalCost }: CostChartProps) {
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
           <span className="text-xs text-muted-foreground uppercase tracking-wider">Total</span>
           <span className="text-2xl font-bold">
-            ${total.toFixed(0)}
+            ${total.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
           <span className="text-[10px] text-muted-foreground">/month</span>
         </div>
@@ -90,7 +90,7 @@ export default function CostChart({ data, totalCost }: CostChartProps) {
               style={{ backgroundColor: COLORS[i % COLORS.length] }}
             />
             <span className="text-xs text-muted-foreground truncate">{item.category}</span>
-            <span className="text-xs font-medium ml-auto">${item.total_cost.toFixed(0)}</span>
+            <span className="text-xs font-medium ml-auto">${item.total_cost.toFixed(2)}</span>
           </div>
         ))}
       </div>

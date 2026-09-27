@@ -12,6 +12,13 @@ from pathlib import Path
 # Add the ml directory to the path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'ml'))
 
+if hasattr(sys.stdout, 'reconfigure'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stderr.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
+
 def main():
     parser = argparse.ArgumentParser(description='Train Terraform Cost Predictor ML model')
     parser.add_argument('--samples', type=int, default=10000, 

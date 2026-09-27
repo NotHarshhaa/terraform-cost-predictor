@@ -1,7 +1,7 @@
 {
-  "model_type": "Gradient Boosting Regressor",
-  "feature_count": 26,
-  "training_date": "2026-03-26T12:07:35.689564",
-  "best_model_r2": 0.999892280929836,
-  "best_model_rmse": 12.639987468857536
+  "model_type": "Lasso Regression",
+  "feature_count": 30,
+  "training_date": "2026-09-27T13:08:31.815573",
+  "best_model_r2": 0.8944395514953708,
+  "best_model_rmse": 423.54437700122315
 }

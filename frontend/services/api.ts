@@ -17,6 +17,11 @@ export interface PredictionResult {
   resources: ResourceCost[];
   category_breakdown: CategoryBreakdown[];
   processing_time: number;
+  model_type?: string;
+  currency?: string;
+  prediction_method?: string;
+  parse_errors?: string[];
+  message?: string;
 }
 
 export interface HealthStatus {

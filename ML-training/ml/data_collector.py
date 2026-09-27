@@ -218,20 +218,16 @@ class AWSPricingCollector:
             lcu_hours = random.randint(1, 100)
             networking_cost += lcu_hours * networking_pricing['application_lb']['per_lcu_hour']
         
-        total_cost = ec2_cost + rds_cost + ebs_cost + s3_cost + networking_cost
-        
-        # Add some realistic variance
-        total_cost *= random.uniform(0.95, 1.05)  # ±5% variance
-        
         # RDS storage calculation
         rds_total_storage = 0
+        rds_storage_cost = 0.0
         if num_rds > 0:
             for _ in range(num_rds):
                 rds_total_storage += random.randint(20, 500)
-            # Add storage cost to RDS
-            rds_cost += rds_total_storage * storage_pricing['ebs']['gp2']['per_gb_month']
-            total_cost = ec2_cost + rds_cost + ebs_cost + s3_cost + networking_cost
-            total_cost *= random.uniform(0.95, 1.05)
+            rds_storage_cost = rds_total_storage * storage_pricing['ebs']['gp2']['per_gb_month']
+            if rds_multi_az:
+                rds_storage_cost *= 2.0
+            rds_cost += rds_storage_cost
 
         # Additional infrastructure
         has_vpc = random.choice([True, False])
@@ -243,7 +239,11 @@ class AWSPricingCollector:
         lambda_cost = lambda_count * random.uniform(2, 20)
         # DynamoDB costs (estimate)
         dynamodb_cost = dynamodb_count * random.uniform(5, 50)
-        total_cost += lambda_cost + dynamodb_cost
+
+        total_cost = ec2_cost + rds_cost + ebs_cost + s3_cost + networking_cost + lambda_cost + dynamodb_cost
+        
+        # Add realistic variance (±5%)
+        total_cost *= random.uniform(0.95, 1.05)
 
         total_resources = (num_ec2 + num_rds + num_ebs_volumes + num_s3_buckets +
                           int(has_nat_gateway) + int(has_load_balancer) +

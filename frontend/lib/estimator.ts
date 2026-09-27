@@ -2,25 +2,30 @@ import { TerraformResource } from './parser';
 import { predictWithML, getFeatureImportance } from './ml-predictor';
 
 // Enhanced AWS Pricing Data (US East - N. Virginia region, USD/month)
-const AWS_PRICING = {
-  // EC2 Instance Types (monthly cost - 730 hours)
+export const AWS_PRICING = {
+  // EC2 Instance Types (monthly cost - 730 hours average)
   ec2: {
+    't2.nano': 4.23,
     't2.micro': 8.47,
     't2.small': 16.79,
     't2.medium': 33.58,
     't2.large': 67.16,
     't2.xlarge': 134.32,
     't2.2xlarge': 268.64,
+    't3.nano': 3.80,
     't3.micro': 7.59,
     't3.small': 15.18,
     't3.medium': 30.37,
     't3.large': 60.74,
     't3.xlarge': 121.47,
     't3.2xlarge': 242.93,
+    't3a.nano': 3.43,
     't3a.micro': 6.84,
     't3a.small': 13.69,
     't3a.medium': 27.38,
     't3a.large': 54.75,
+    't3a.xlarge': 109.50,
+    't3a.2xlarge': 219.00,
     'm5.large': 70.08,
     'm5.xlarge': 140.16,
     'm5.2xlarge': 280.32,
@@ -73,27 +78,30 @@ const AWS_PRICING = {
   },
   // Networking & Services (monthly cost)
   services: {
-    nat_gateway: 32.85, // $0.045/hour
+    nat_gateway: 32.85, // $0.045/hour * 730
     nat_gateway_data_processing: 0.045, // per GB
-    load_balancer_alb: 16.43, // $0.0225/hour
+    load_balancer_alb: 16.43, // $0.0225/hour * 730
     load_balancer_nlb: 16.43,
     load_balancer_classic: 16.43,
-    elastic_ip: 3.65, // when not attached
+    elastic_ip: 3.65, // unattached
     vpc: 0,
     internet_gateway: 0,
     subnet: 0,
     route_table: 0,
     security_group: 0,
     lambda_gb_second: 0.0000166667,
-    lambda_requests: 0.0000002, // per request
-    dynamodb_rcu: 0.00013,
-    dynamodb_wcu: 0.00065,
+    lambda_requests: 0.0000002, // $0.20 per 1M requests
+    // Monthly provisioned rates (hourly rate * 730 hours)
+    dynamodb_rcu: 0.00013 * 730, // ~$0.0949 per RCU/month
+    dynamodb_wcu: 0.00065 * 730, // ~$0.4745 per WCU/month
     cloudfront_data_transfer: 0.085, // per GB
     route53_hosted_zone: 0.50, // per zone per month
     route53_queries: 0.40, // per million queries
     elasticache_cache_node_t3_micro: 12.41,
     elasticache_cache_node_t3_small: 24.82,
     elasticache_cache_node_t3_medium: 49.64,
+    elasticache_cache_node_m5_large: 116.80,
+    elasticache_cache_node_r5_large: 153.30,
     sns_requests: 0.50, // per million
     sqs_requests: 0.40, // per million
     cloudwatch_metrics: 0.30, // per custom metric
@@ -122,40 +130,11 @@ export interface CostPrediction {
   model_type: string;
   currency: string;
   prediction_method: string;
+  parse_errors?: string[];
 }
 
 /**
- * ML-Powered Cost Estimation
- * Uses trained Random Forest model with feature extraction
- */
-export async function estimateCostML(resources: TerraformResource[]): Promise<CostPrediction> {
-  const startTime = Date.now();
-  
-  // Use ML prediction
-  const mlPrediction = await predictWithML(resources);
-  
-  // Get per-resource breakdown using rule-based approach
-  const resourceBreakdown = estimateCost(resources);
-  
-  // Combine ML prediction with resource breakdown
-  const featureImportance = getFeatureImportance(mlPrediction.features_used);
-  
-  const processingTime = Date.now() - startTime;
-  
-  return {
-    total_estimated_cost: mlPrediction.predicted_cost,
-    confidence_score: mlPrediction.confidence_score,
-    resources: resourceBreakdown.resources,
-    category_breakdown: resourceBreakdown.category_breakdown,
-    processing_time: processingTime / 1000,
-    model_type: 'ML-Powered Random Forest (R²: 0.9999)',
-    currency: 'USD',
-    prediction_method: 'ml',
-  };
-}
-
-/**
- * Rule-based Cost Estimation (fallback and resource breakdown)
+ * Rule-based Cost Estimation (deterministic breakdown per resource)
  */
 export function estimateCost(resources: TerraformResource[]): CostPrediction {
   const startTime = Date.now();
@@ -163,63 +142,89 @@ export function estimateCost(resources: TerraformResource[]): CostPrediction {
   const categoryMap = new Map<string, { total: number; count: number }>();
 
   for (const resource of resources) {
+    const rawCount = resource.attributes._count;
+    const count = typeof rawCount === 'number' ? rawCount : 1;
+    
+    // If resource is conditionally disabled (count = 0)
+    if (count === 0) {
+      resourceCosts.push({
+        resource_type: resource.type,
+        resource_name: resource.name,
+        estimated_cost: 0,
+        confidence_score: 1.0,
+      });
+      continue;
+    }
+
     let cost = 0;
-    let confidence = 0.85; // Changed to decimal (0-1)
+    let confidence = 0.85;
     let category = 'Other';
 
     // EC2 Instances
     if (resource.type === 'aws_instance') {
       category = 'EC2';
       const instanceType = resource.attributes.instance_type || 't2.micro';
-      const count = resource.attributes._count || 1;
       const baseCost = AWS_PRICING.ec2[instanceType as keyof typeof AWS_PRICING.ec2] || 50;
-      cost = baseCost * count;
-      
-      // Intelligent confidence scoring
-      confidence = 0.75; // Base confidence
-      if (resource.attributes.instance_type) confidence += 0.15; // Has instance type
-      if (resource.attributes.ami) confidence += 0.05; // Has AMI specified
-      if (count === 1) confidence += 0.05; // Single instance is more predictable
+      let instanceCost = baseCost;
+
+      // Add root EBS block device storage
+      if (resource.attributes.root_block_device) {
+        const rootSize = resource.attributes.root_block_device.volume_size || 30;
+        const rootType = resource.attributes.root_block_device.volume_type || 'gp3';
+        const priceKey = `ebs_${rootType}` as keyof typeof AWS_PRICING.storage;
+        const storagePrice = AWS_PRICING.storage[priceKey] || AWS_PRICING.storage.ebs_gp3;
+        instanceCost += rootSize * storagePrice;
+      } else if (resource.attributes.volume_size) {
+        const rootSize = parseInt(resource.attributes.volume_size, 10) || 30;
+        instanceCost += rootSize * AWS_PRICING.storage.ebs_gp3;
+      }
+
+      cost = instanceCost * count;
+      confidence = 0.80;
+      if (resource.attributes.instance_type) confidence += 0.12;
+      if (resource.attributes.ami) confidence += 0.05;
     }
 
     // RDS Instances
     else if (resource.type === 'aws_db_instance') {
       category = 'RDS';
       const instanceClass = resource.attributes.instance_class || 'db.t3.micro';
-      cost = AWS_PRICING.rds[instanceClass as keyof typeof AWS_PRICING.rds] || 100;
-      
-      // Add storage cost
-      const storage = parseInt(resource.attributes.allocated_storage) || 20;
-      cost += storage * AWS_PRICING.storage.rds_storage;
-      
-      // Multi-AZ doubles the cost
+      let rdsBase = AWS_PRICING.rds[instanceClass as keyof typeof AWS_PRICING.rds] || 100;
+      const storage = parseInt(resource.attributes.allocated_storage, 10) || 20;
+      let storageCost = storage * AWS_PRICING.storage.rds_storage;
+
       if (resource.attributes.multi_az) {
-        cost *= 2;
+        rdsBase *= 2;
+        storageCost *= 2;
       }
-      
-      // Intelligent confidence scoring
-      confidence = 0.70; // Base confidence
+
+      cost = (rdsBase + storageCost) * count;
+      confidence = 0.80;
       if (resource.attributes.instance_class) confidence += 0.10;
-      if (resource.attributes.allocated_storage) confidence += 0.08;
-      if (resource.attributes.engine) confidence += 0.05;
-      if (resource.attributes.multi_az !== undefined) confidence += 0.05;
+      if (resource.attributes.allocated_storage) confidence += 0.05;
     }
 
     // S3 Buckets
     else if (resource.type === 'aws_s3_bucket') {
       category = 'S3';
-      // Estimate 100GB storage per bucket
-      cost = 100 * AWS_PRICING.storage.s3_standard;
-      confidence = 0.70;
+      cost = (100 * AWS_PRICING.storage.s3_standard) * count;
+      confidence = 0.75;
     }
 
     // EBS Volumes
     else if (resource.type === 'aws_ebs_volume') {
       category = 'EBS';
-      const size = parseInt(resource.attributes.size) || 100;
+      const size = parseInt(resource.attributes.size, 10) || 100;
       const volumeType = resource.attributes.type || 'gp3';
       const priceKey = `ebs_${volumeType}` as keyof typeof AWS_PRICING.storage;
-      cost = size * (AWS_PRICING.storage[priceKey] || AWS_PRICING.storage.ebs_gp3);
+      let unitCost = size * (AWS_PRICING.storage[priceKey] || AWS_PRICING.storage.ebs_gp3);
+
+      if (volumeType === 'io1' || volumeType === 'io2') {
+        const iops = parseInt(resource.attributes.iops, 10) || 1000;
+        unitCost += iops * 0.065;
+      }
+
+      cost = unitCost * count;
       confidence = 0.92;
     }
 
@@ -227,20 +232,20 @@ export function estimateCost(resources: TerraformResource[]): CostPrediction {
     else if (resource.type === 'aws_lb' || resource.type === 'aws_alb') {
       category = 'LoadBalancer';
       const lbType = resource.attributes.load_balancer_type || 'application';
-      cost = lbType === 'network' ? AWS_PRICING.services.load_balancer_nlb : AWS_PRICING.services.load_balancer_alb;
+      const unit = lbType === 'network' ? AWS_PRICING.services.load_balancer_nlb : AWS_PRICING.services.load_balancer_alb;
+      cost = unit * count;
       confidence = 0.95;
     }
     else if (resource.type === 'aws_elb') {
       category = 'LoadBalancer';
-      cost = AWS_PRICING.services.load_balancer_classic;
+      cost = AWS_PRICING.services.load_balancer_classic * count;
       confidence = 0.95;
     }
 
-    // NAT Gateway (includes estimated data processing)
+    // NAT Gateway
     else if (resource.type === 'aws_nat_gateway') {
       category = 'Networking';
-      const count = resource.attributes._count || 1;
-      // Base cost + estimated 100GB data processing per month
+      // Base hourly cost + estimated 100GB data processing per month
       cost = (AWS_PRICING.services.nat_gateway + (100 * AWS_PRICING.services.nat_gateway_data_processing)) * count;
       confidence = 0.90;
     }
@@ -248,132 +253,117 @@ export function estimateCost(resources: TerraformResource[]): CostPrediction {
     // Elastic IP
     else if (resource.type === 'aws_eip') {
       category = 'Networking';
-      cost = AWS_PRICING.services.elastic_ip;
+      cost = AWS_PRICING.services.elastic_ip * count;
       confidence = 0.95;
     }
 
-    // VPC
-    else if (resource.type === 'aws_vpc') {
+    // VPC and networking infrastructure
+    else if (resource.type === 'aws_vpc' || resource.type === 'aws_subnet' || 
+             resource.type === 'aws_internet_gateway' || resource.type === 'aws_route_table' || 
+             resource.type === 'aws_security_group') {
       category = 'Networking';
-      cost = AWS_PRICING.services.vpc;
-      confidence = 1.00;
-    }
-
-    // Subnets, Internet Gateways (free resources)
-    else if (resource.type === 'aws_subnet' || resource.type === 'aws_internet_gateway') {
-      category = 'Networking';
-      cost = 0;
+      cost = 0; // Control plane & virtual network definitions are free in AWS
       confidence = 1.00;
     }
 
     // Lambda Functions
     else if (resource.type === 'aws_lambda_function') {
       category = 'Lambda';
-      // Estimate based on memory and invocations
-      const memory = parseInt(resource.attributes.memory_size) || 128;
-      const estimatedInvocations = 1000000; // 1M invocations/month
+      const memory = parseInt(resource.attributes.memory_size, 10) || 128;
+      const estimatedInvocations = 1000000; // 1M invocations/month baseline
       const avgDuration = 100; // 100ms average
-      cost = (memory / 1024) * (avgDuration / 1000) * estimatedInvocations * AWS_PRICING.services.lambda_gb_second;
-      confidence = 0.65;
+      const computeCost = (memory / 1024) * (avgDuration / 1000) * estimatedInvocations * AWS_PRICING.services.lambda_gb_second;
+      const requestCost = estimatedInvocations * AWS_PRICING.services.lambda_requests;
+      cost = (computeCost + requestCost) * count;
+      confidence = 0.75;
     }
 
     // DynamoDB Tables
     else if (resource.type === 'aws_dynamodb_table') {
       category = 'DynamoDB';
-      const readCapacity = parseInt(resource.attributes.read_capacity) || 5;
-      const writeCapacity = parseInt(resource.attributes.write_capacity) || 5;
-      cost = (readCapacity * AWS_PRICING.services.dynamodb_rcu) + 
-             (writeCapacity * AWS_PRICING.services.dynamodb_wcu);
-      confidence = 0.80;
-    }
-
-    // ECS/EKS Clusters
-    else if (resource.type === 'aws_ecs_cluster') {
-      category = 'Container';
-      cost = 0; // ECS control plane is free, only pay for EC2/Fargate
-      confidence = 1.00;
-    }
-    else if (resource.type === 'aws_eks_cluster') {
-      category = 'Container';
-      cost = 73; // EKS control plane cost
-      confidence = 0.95;
-    }
-
-    // CloudFront Distribution
-    else if (resource.type === 'aws_cloudfront_distribution') {
-      category = 'CDN';
-      // Estimate 500GB data transfer per month
-      cost = 500 * AWS_PRICING.services.cloudfront_data_transfer;
-      confidence = 0.60;
-    }
-
-    // Route53 Hosted Zone
-    else if (resource.type === 'aws_route53_zone') {
-      category = 'DNS';
-      cost = AWS_PRICING.services.route53_hosted_zone;
-      // Add estimated query costs (1M queries)
-      cost += AWS_PRICING.services.route53_queries;
+      const readCapacity = parseInt(resource.attributes.read_capacity, 10) || 5;
+      const writeCapacity = parseInt(resource.attributes.write_capacity, 10) || 5;
+      cost = ((readCapacity * AWS_PRICING.services.dynamodb_rcu) + 
+              (writeCapacity * AWS_PRICING.services.dynamodb_wcu)) * count;
       confidence = 0.85;
     }
 
-    // ElastiCache
+    // CloudFront Distributions
+    else if (resource.type === 'aws_cloudfront_distribution') {
+      category = 'CDN';
+      cost = (500 * AWS_PRICING.services.cloudfront_data_transfer) * count;
+      confidence = 0.70;
+    }
+
+    // Route53 Hosted Zones
+    else if (resource.type === 'aws_route53_zone') {
+      category = 'DNS';
+      cost = (AWS_PRICING.services.route53_hosted_zone + AWS_PRICING.services.route53_queries) * count;
+      confidence = 0.90;
+    }
+
+    // ElastiCache Clusters
     else if (resource.type === 'aws_elasticache_cluster') {
       category = 'Cache';
       const nodeType = resource.attributes.node_type || 'cache.t3.micro';
-      const numNodes = parseInt(resource.attributes.num_cache_nodes) || 1;
-      const nodeTypeKey = nodeType.replace('cache.', 'elasticache_cache_node_').replace('.', '_');
+      const numNodes = parseInt(resource.attributes.num_cache_nodes, 10) || 1;
+      const nodeTypeKey = nodeType.replace('cache.', 'elasticache_cache_node_').replace(/\./g, '_');
       const nodeCost = (AWS_PRICING.services as any)[nodeTypeKey] || AWS_PRICING.services.elasticache_cache_node_t3_micro;
-      cost = nodeCost * numNodes;
+      cost = nodeCost * numNodes * count;
       confidence = 0.88;
     }
 
-    // SNS Topics
-    else if (resource.type === 'aws_sns_topic') {
-      category = 'Messaging';
-      // Estimate 1M requests per month
-      cost = AWS_PRICING.services.sns_requests;
-      confidence = 0.70;
-    }
-
-    // SQS Queues
-    else if (resource.type === 'aws_sqs_queue') {
-      category = 'Messaging';
-      // Estimate 1M requests per month
-      cost = AWS_PRICING.services.sqs_requests;
-      confidence = 0.70;
+    // EFS File Systems
+    else if (resource.type === 'aws_efs_file_system') {
+      category = 'Storage';
+      cost = (100 * AWS_PRICING.storage.efs_standard) * count;
+      confidence = 0.75;
     }
 
     // CloudWatch Log Groups
     else if (resource.type === 'aws_cloudwatch_log_group') {
       category = 'Monitoring';
-      // Estimate 10GB ingestion + 10GB storage per month
-      cost = (10 * 0.50) + (10 * 0.03); // $0.50/GB ingestion, $0.03/GB storage
-      confidence = 0.65;
+      cost = ((10 * 0.50) + (10 * 0.03)) * count;
+      confidence = 0.80;
     }
 
-    // EFS File System
-    else if (resource.type === 'aws_efs_file_system') {
-      category = 'Storage';
-      // Estimate 100GB storage
-      cost = 100 * AWS_PRICING.storage.efs_standard;
-      confidence = 0.70;
+    // SNS & SQS
+    else if (resource.type === 'aws_sns_topic') {
+      category = 'Messaging';
+      cost = AWS_PRICING.services.sns_requests * count;
+      confidence = 0.85;
+    }
+    else if (resource.type === 'aws_sqs_queue') {
+      category = 'Messaging';
+      cost = AWS_PRICING.services.sqs_requests * count;
+      confidence = 0.85;
+    }
+
+    // EKS & ECS
+    else if (resource.type === 'aws_eks_cluster') {
+      category = 'Container';
+      cost = 73.0 * count; // $0.10/hour * 730
+      confidence = 0.95;
+    }
+    else if (resource.type === 'aws_ecs_cluster') {
+      category = 'Container';
+      cost = 0; // ECS control plane is free
+      confidence = 1.00;
     }
 
     resourceCosts.push({
       resource_type: resource.type,
       resource_name: resource.name,
       estimated_cost: parseFloat(cost.toFixed(2)),
-      confidence_score: confidence,
+      confidence_score: Math.min(1.0, Math.max(0.1, confidence)),
     });
 
-    // Update category totals
     const categoryData = categoryMap.get(category) || { total: 0, count: 0 };
     categoryData.total += cost;
-    categoryData.count += 1;
+    categoryData.count += count;
     categoryMap.set(category, categoryData);
   }
 
-  // Calculate category breakdown
   const category_breakdown: CategoryBreakdown[] = Array.from(categoryMap.entries()).map(
     ([category, data]) => ({
       category,
@@ -382,14 +372,13 @@ export function estimateCost(resources: TerraformResource[]): CostPrediction {
     })
   );
 
-  // Calculate totals
   const total_estimated_cost = parseFloat(
     resourceCosts.reduce((sum, r) => sum + r.estimated_cost, 0).toFixed(2)
   );
 
   const avgConfidence = resourceCosts.length > 0
     ? resourceCosts.reduce((sum, r) => sum + r.confidence_score, 0) / resourceCosts.length
-    : 0;
+    : 0.85;
 
   const processingTime = Date.now() - startTime;
 
@@ -402,5 +391,52 @@ export function estimateCost(resources: TerraformResource[]): CostPrediction {
     model_type: 'Rule-based Cost Estimator',
     currency: 'USD',
     prediction_method: 'deterministic',
+  };
+}
+
+/**
+ * ML-Powered Cost Estimation
+ * Uses ML architecture modeling and feature extraction with mathematical reconciliation
+ */
+export async function estimateCostML(resources: TerraformResource[]): Promise<CostPrediction> {
+  const startTime = Date.now();
+
+  // 1. Calculate baseline deterministic breakdown
+  const resourceBreakdown = estimateCost(resources);
+
+  // 2. Perform ML architecture inference
+  const mlPrediction = await predictWithML(resources, resourceBreakdown.total_estimated_cost);
+
+  const finalTotal = mlPrediction.predicted_cost;
+  const baseTotal = resourceBreakdown.total_estimated_cost;
+
+  // 3. Reconcile category and resource costs so all tabs (Summary, Chart, Resources) match exactly
+  let reconciledResources = resourceBreakdown.resources;
+  let reconciledCategories = resourceBreakdown.category_breakdown;
+
+  if (baseTotal > 0 && finalTotal > 0 && Math.abs(finalTotal - baseTotal) > 0.001) {
+    const scale = finalTotal / baseTotal;
+    reconciledResources = resourceBreakdown.resources.map(r => ({
+      ...r,
+      estimated_cost: parseFloat((r.estimated_cost * scale).toFixed(2)),
+    }));
+
+    reconciledCategories = resourceBreakdown.category_breakdown.map(c => ({
+      ...c,
+      total_cost: parseFloat((c.total_cost * scale).toFixed(2)),
+    }));
+  }
+
+  const processingTime = Date.now() - startTime;
+
+  return {
+    total_estimated_cost: finalTotal,
+    confidence_score: mlPrediction.confidence_score,
+    resources: reconciledResources,
+    category_breakdown: reconciledCategories,
+    processing_time: processingTime / 1000,
+    model_type: 'ML-Powered Architecture Predictor (R²: 0.894)',
+    currency: 'USD',
+    prediction_method: 'ml',
   };
 }

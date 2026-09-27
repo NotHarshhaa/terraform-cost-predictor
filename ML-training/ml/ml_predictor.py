@@ -116,25 +116,54 @@ class MLPredictor:
     
     def _convert_to_ml_features(self, features: Dict[str, Any], resource_details: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Convert terraform features to ML model features."""
+        # Extract counts and flags
+        has_nat = int(features.get('has_nat_gateway', 0) > 0 or 
+                      features.get('nat_gateway_count', 0) > 0 or 
+                      features.get('networking_count', 0) > 0 or
+                      any(r.get('type') == 'aws_nat_gateway' for r in resource_details))
+        
+        has_lb = int(features.get('has_load_balancer', 0) > 0 or 
+                     features.get('lb_count', 0) > 0 or
+                     any(r.get('type') in ('aws_lb', 'aws_alb', 'aws_elb') for r in resource_details))
+        
+        has_vpc = int(features.get('has_vpc', 0) > 0 or 
+                      features.get('vpc_count', 0) > 0 or
+                      any(r.get('type') == 'aws_vpc' for r in resource_details))
+        
+        subnet_count = features.get('subnet_count', 0) or sum(1 for r in resource_details if r.get('type') == 'aws_subnet')
+        lambda_count = features.get('lambda_count', 0) or sum(1 for r in resource_details if r.get('category') == 'Lambda' or r.get('type') == 'aws_lambda_function')
+        dynamodb_count = features.get('dynamodb_count', 0) or sum(1 for r in resource_details if r.get('category') == 'DynamoDB' or r.get('type') == 'aws_dynamodb_table')
+        
+        rds_storage = self._calculate_total_rds_storage(resource_details)
+        if rds_storage == 0 and features.get('rds_count', 0) > 0:
+            rds_storage = features.get('rds_count', 0) * 20
+
         ml_features = {
             # Basic counts
             'ec2_count': features.get('ec2_count', 0),
             'rds_count': features.get('rds_count', 0),
-            'ebs_volume_count': features.get('ebs_count', 0),
-            's3_bucket_count': features.get('s3_count', 0),
-            'has_nat_gateway': int(features.get('networking_count', 0) > 0),
-            'has_load_balancer': int(features.get('lb_count', 0) > 0),
+            'ebs_volume_count': features.get('ebs_count', features.get('ebs_volume_count', 0)),
+            's3_bucket_count': features.get('s3_count', features.get('s3_bucket_count', 0)),
+            'has_nat_gateway': has_nat,
+            'has_load_balancer': has_lb,
             
             # Resource specifications
             'ec2_total_memory': self._calculate_total_memory(resource_details, 'EC2'),
             'ec2_total_vcpu': self._calculate_total_vcpu(resource_details, 'EC2'),
             'rds_total_memory': self._calculate_total_memory(resource_details, 'RDS'),
-            'rds_multi_az': int(features.get('rds_multi_az_count', 0) > 0),
+            'rds_total_storage': rds_storage,
+            'rds_multi_az': int(features.get('rds_multi_az', features.get('rds_multi_az_count', 0)) > 0),
             'ebs_total_gb': self._calculate_total_storage(resource_details, 'EBS'),
             's3_total_gb': self._estimate_s3_usage(resource_details),
+            'has_vpc': has_vpc,
+            'subnet_count': subnet_count,
+            'lambda_count': lambda_count,
+            'dynamodb_count': dynamodb_count,
             
             # Total resources
-            'total_resources': len(resource_details) if resource_details else 1,
+            'total_resources': len(resource_details) if resource_details else (
+                features.get('total_resources', 1)
+            ),
         }
         
         return ml_features
@@ -262,6 +291,15 @@ class MLPredictor:
                     total_storage += features.get('volume_size_gb', 20)
         
         return total_storage
+
+    def _calculate_total_rds_storage(self, resource_details: List[Dict[str, Any]]) -> float:
+        """Calculate total storage for RDS instances."""
+        total_storage = 0.0
+        for resource in resource_details:
+            if resource.get('category') == 'RDS' or resource.get('type') == 'aws_db_instance':
+                features = resource.get('features', {})
+                total_storage += float(features.get('allocated_storage', 20))
+        return total_storage
     
     def _estimate_s3_usage(self, resource_details: List[Dict[str, Any]]) -> float:
         """Estimate S3 usage based on bucket count and typical usage patterns."""
@@ -305,7 +343,13 @@ class MLPredictor:
         """Calculate prediction confidence score."""
         # Base confidence from model performance
         model_name = self.best_model_name if self.best_model_name else 'Random Forest'
-        base_confidence = self.metrics.get(model_name, {}).get('r2', 0.8) * 100
+        metric_info = (self.metrics.get(model_name) or
+                       self.metrics.get(model_name.replace(' Regressor', '')) or
+                       self.metrics.get('Gradient Boosting') or
+                       self.metrics.get('Random Forest') or
+                       (list(self.metrics.values())[0] if self.metrics else {'r2': 0.8}))
+        r2 = metric_info.get('r2', 0.8) if isinstance(metric_info, dict) else 0.8
+        base_confidence = max(50.0, r2 * 100)
         
         # Adjust based on feature coverage
         known_resources = sum(1 for r in resource_details if r.get('category') != 'Other')
